@@ -13,7 +13,7 @@ object build extends Build {
     publishMavenStyle := true,
     publishArtifact in Compile := false,
     publishArtifact in Test := false,
-    scalacOptions ++= Seq("-deprecation", "-feature", "-optimise"),
+    scalacOptions ++= Seq("-feature", "-optimise"),
     parallelExecution in Test := false, // hello, reflection sync!!
     logBuffered := false,
     scalaHome := {
