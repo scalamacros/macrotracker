@@ -6,8 +6,8 @@ import scala.tools.nsc.plugins.{ Plugin => NscPlugin, PluginComponent => NscPlug
 class Plugin(val global: Global) extends NscPlugin {
   import global._
 
-  val name = "Scala host for Project Palladium"
+  val name = "scalahost"
   val description = """Hosts Project Palladium macros in scalac.
-  For more information visit https://github.com/scalareflect/palladium-scalac"""
+  For more information visit https://github.com/scalareflect/scalahost"""
   val components = List[NscPluginComponent]()
 }
