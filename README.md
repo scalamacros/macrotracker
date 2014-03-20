@@ -1,7 +1,7 @@
 ### Scala host
 
-Scala host for [Project Palladium](http://scalamacros.org/news/2014/03/02/project-palladium.html) provides an
-analyzer plugin that can host Project Palladium macros by overriding macro expansion hooks exposed
+Scala host for [Project Palladium](http://scalamacros.org/news/2014/03/02/project-palladium.html) provides a
+macro plugin that can host Project Palladium macros by overriding macro expansion hooks exposed
 by scalac typechecker and wrapping scalac internal compiler data stuctures to conform to the API exposes in
 [Palladium core](https://github.com/scalareflect/core).
 
