@@ -10,8 +10,26 @@ trait Types {
     type CompilerType = c.universe.Type
     type OurType = Type
     implicit class RichCompilerType(tpe: CompilerType) {
-      def wrap: OurType = {
-        ???
+      def wrap: OurType = tpe match {
+        case null => null
+        case c.universe.NoType => NoType
+        case c.universe.NoPrefix => NoPrefix
+        case c.universe.WildcardType => WildcardType
+        case tpe if c.universe.AnnotatedTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.AnnotatedType].wrap
+        case tpe if c.universe.BoundedWildcardTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.BoundedWildcardType].wrap
+        case tpe if c.universe.ClassInfoTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.ClassInfoType].wrap
+        case tpe if c.universe.ConstantTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.ConstantType].wrap
+        case tpe if c.universe.ExistentialTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.ExistentialType].wrap
+        case tpe if c.universe.MethodTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.MethodType].wrap
+        case tpe if c.universe.NullaryMethodTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.NullaryMethodType].wrap
+        case tpe if c.universe.PolyTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.PolyType].wrap
+        case tpe if c.universe.RefinedTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.RefinedType].wrap
+        case tpe if c.universe.SingleTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.SingleType].wrap
+        case tpe if c.universe.SuperTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.SuperType].wrap
+        case tpe if c.universe.ThisTypeTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.ThisType].wrap
+        case tpe if c.universe.TypeBoundsTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.TypeBounds].wrap
+        case tpe if c.universe.TypeRefTag.runtimeClass.isInstance(tpe) => tpe.asInstanceOf[c.universe.TypeRef].wrap
+        case _ => throw new Exception(s"don't know how to wrap $tpe (${c.universe.showRaw(tpe)}) of ${tpe.getClass}")
       }
     }
     implicit class RichOurType(val tpe: OurType) { def unwrap: CompilerType = tpe.tpe0 }
@@ -82,6 +100,7 @@ trait Types {
       def typeSymbol: Symbol = tpe0.typeSymbol.wrap
       def weak_<:<(that: Type): Boolean = tpe0 weak_<:< that.unwrap
       def widen: Type = tpe0.widen.wrap
+      override def toString = tpe0.toString
     }
 
     class AnnotatedType(val tpe: c.universe.AnnotatedType) extends Type(tpe) with AnnotatedTypeApi {
@@ -193,9 +212,9 @@ trait Types {
       def unapply(tpe: TypeRef): Option[(Type, Symbol, List[Type])] = c.universe.TypeRef.unapply(tpe.unwrap).map { case (x1, x2, x3) => (x1.wrap, x2.wrap, x3.map(_.wrap)) }
     }
 
-    val NoPrefix: Type = c.universe.NoPrefix.wrap
-    val NoType: Type = c.universe.NoType.wrap
-    val WildcardType: Type = c.universe.WildcardType.wrap
+    case object NoPrefix extends Type(c.universe.NoPrefix)
+    case object NoType extends Type(c.universe.NoType)
+    case object WildcardType extends Type(c.universe.WildcardType)
 
     def appliedType(sym: OurSymbol, args: OurType*): Type = c.universe.appliedType(sym.unwrap, args.map(_.unwrap): _*).wrap
     def appliedType(sym: OurSymbol, args: List[OurType]): Type = appliedType(sym, args: _*)

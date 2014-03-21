@@ -10,8 +10,17 @@ trait Trees {
     type CompilerTree = c.universe.Tree
     type OurTree = Tree
     implicit class RichCompilerTree(t: CompilerTree) {
-      def wrap: OurTree = {
-        ???
+      def wrap: OurTree = t match {
+        case null => null
+        case c.universe.EmptyTree => EmptyTree
+        case c.universe.emptyValDef => emptyValDef
+        case c.universe.noSelfType => noSelfType
+        case c.universe.pendingSuperCall => pendingSuperCall
+        case t if c.universe.IdentTag.runtimeClass.isInstance(t) => t.asInstanceOf[c.universe.Ident].wrap
+        case t if c.universe.SelectTag.runtimeClass.isInstance(t) => t.asInstanceOf[c.universe.Select].wrap
+        case t if c.universe.ApplyTag.runtimeClass.isInstance(t) => t.asInstanceOf[c.universe.Apply].wrap
+        case t if c.universe.LiteralTag.runtimeClass.isInstance(t) => t.asInstanceOf[c.universe.Literal].wrap
+        case _ => throw new Exception(s"don't know how to wrap $t (${c.universe.showRaw(t)}) of ${t.getClass}")
       }
     }
     implicit class RichOurTree(t: OurTree) { def unwrap: CompilerTree = t.t0 }
@@ -572,10 +581,10 @@ trait Trees {
       def unapply(typeTree: TypeTree): Boolean = c.universe.TypeTree.unapply(typeTree.unwrap)
     }
 
-    val EmptyTree: Tree = c.universe.EmptyTree.wrap
-    val emptyValDef: ValDef = noSelfType
-    val noSelfType: ValDef = c.universe.noSelfType.wrap
-    val pendingSuperCall: Apply = c.universe.pendingSuperCall.wrap
+    case object EmptyTree extends Tree(c.universe.EmptyTree)
+    lazy val emptyValDef = noSelfType
+    case object noSelfType extends ValDef(c.universe.noSelfType)
+    case object pendingSuperCall extends Apply(c.universe.pendingSuperCall)
 
     def Block(stats: Tree*): Block = c.universe.Block(stats.map(_.unwrap): _*).wrap
     def CaseDef(pat: Tree, body: Tree): CaseDef = c.universe.CaseDef(pat.unwrap, body.unwrap).wrap
@@ -595,10 +604,95 @@ trait Trees {
     def Ident(sym: Symbol): Ident = c.universe.Ident(sym.unwrap).wrap
     def TypeTree(tp: Type): TypeTree = c.universe.TypeTree(tp.unwrap).wrap
 
-    // TODO: implement later, too much hassle for now
-    abstract class TreeCopier extends TreeCopierOps
-    def newLazyTreeCopier: TreeCopier = ???
-    def newStrictTreeCopier: TreeCopier = ???
+    type TreeCopier = AdaptingTreeCopier
+    class AdaptingTreeCopier(tc: c.universe.TreeCopier) extends TreeCopierOps {
+      def ClassDef(tree: Tree, mods: Modifiers, name: Name, tparams: List[TypeDef], impl: Template) =
+        tc.ClassDef(tree.unwrap, mods.unwrap, name.unwrap, tparams.map(_.unwrap), impl.unwrap).wrap
+      def PackageDef(tree: Tree, pid: RefTree, stats: List[Tree]) =
+        tc.PackageDef(tree.unwrap, pid.unwrap, stats.map(_.unwrap)).wrap
+      def ModuleDef(tree: Tree, mods: Modifiers, name: Name, impl: Template) =
+        tc.ModuleDef(tree.unwrap, mods.unwrap, name.toTermName.unwrap, impl.unwrap).wrap
+      def ValDef(tree: Tree, mods: Modifiers, name: Name, tpt: Tree, rhs: Tree) =
+        tc.ValDef(tree.unwrap, mods.unwrap, name.toTermName.unwrap, tpt.unwrap, rhs.unwrap).wrap
+      def DefDef(tree: Tree, mods: Modifiers, name: Name, tparams: List[TypeDef], vparamss: List[List[ValDef]], tpt: Tree, rhs: Tree) =
+        tc.DefDef(tree.unwrap, mods.unwrap, name.toTermName.unwrap, tparams.map(_.unwrap), vparamss.map(_.map(_.unwrap)), tpt.unwrap, rhs.unwrap).wrap
+      def TypeDef(tree: Tree, mods: Modifiers, name: Name, tparams: List[TypeDef], rhs: Tree) =
+        tc.TypeDef(tree.unwrap, mods.unwrap, name.toTypeName.unwrap, tparams.map(_.unwrap), rhs.unwrap).wrap
+      def LabelDef(tree: Tree, name: Name, params: List[Ident], rhs: Tree) =
+        tc.LabelDef(tree.unwrap, name.toTermName.unwrap, params.map(_.unwrap), rhs.unwrap).wrap
+      def Import(tree: Tree, expr: Tree, selectors: List[ImportSelector]) =
+        tc.Import(tree.unwrap, expr.unwrap, selectors.map(_.unwrap)).wrap
+      def Template(tree: Tree, parents: List[Tree], self: ValDef, body: List[Tree]) =
+        tc.Template(tree.unwrap, parents.map(_.unwrap), self.unwrap, body.map(_.unwrap)).wrap
+      def Block(tree: Tree, stats: List[Tree], expr: Tree) =
+        tc.Block(tree.unwrap, stats.map(_.unwrap), expr.unwrap).wrap
+      def CaseDef(tree: Tree, pat: Tree, guard: Tree, body: Tree) =
+        tc.CaseDef(tree.unwrap, pat.unwrap, guard.unwrap, body.unwrap).wrap
+      def Alternative(tree: Tree, trees: List[Tree]) =
+        tc.Alternative(tree.unwrap, trees.map(_.unwrap)).wrap
+      def Star(tree: Tree, elem: Tree) =
+        tc.Star(tree.unwrap, elem.unwrap).wrap
+      def Bind(tree: Tree, name: Name, body: Tree) =
+        tc.Bind(tree.unwrap, name.unwrap, body.unwrap).wrap
+      def UnApply(tree: Tree, fun: Tree, args: List[Tree]) =
+        tc.UnApply(tree.unwrap, fun.unwrap, args.map(_.unwrap)).wrap
+      def Function(tree: Tree, vparams: List[ValDef], body: Tree) =
+        tc.Function(tree.unwrap, vparams.map(_.unwrap), body.unwrap).wrap
+      def Assign(tree: Tree, lhs: Tree, rhs: Tree) =
+        tc.Assign(tree.unwrap, lhs.unwrap, rhs.unwrap).wrap
+      def AssignOrNamedArg(tree: Tree, lhs: Tree, rhs: Tree) =
+        tc.AssignOrNamedArg(tree.unwrap, lhs.unwrap, rhs.unwrap).wrap
+      def If(tree: Tree, cond: Tree, thenp: Tree, elsep: Tree) =
+        tc.If(tree.unwrap, cond.unwrap, thenp.unwrap, elsep.unwrap).wrap
+      def Match(tree: Tree, selector: Tree, cases: List[CaseDef]) =
+        tc.Match(tree.unwrap, selector.unwrap, cases.map(_.unwrap)).wrap
+      def Return(tree: Tree, expr: Tree) =
+        tc.Return(tree.unwrap, expr.unwrap).wrap
+      def Try(tree: Tree, block: Tree, catches: List[CaseDef], finalizer: Tree) =
+        tc.Try(tree.unwrap, block.unwrap, catches.map(_.unwrap), finalizer.unwrap).wrap
+      def Throw(tree: Tree, expr: Tree) =
+        tc.Throw(tree.unwrap, expr.unwrap).wrap
+      def New(tree: Tree, tpt: Tree) =
+        tc.New(tree.unwrap, tpt.unwrap).wrap
+      def Typed(tree: Tree, expr: Tree, tpt: Tree) =
+        tc.Typed(tree.unwrap, expr.unwrap, tpt.unwrap).wrap
+      def TypeApply(tree: Tree, fun: Tree, args: List[Tree]) =
+        tc.TypeApply(tree.unwrap, fun.unwrap, args.map(_.unwrap)).wrap
+      def Apply(tree: Tree, fun: Tree, args: List[Tree]) =
+        tc.Apply(tree.unwrap, fun.unwrap, args.map(_.unwrap)).wrap
+      def Super(tree: Tree, qual: Tree, mix: TypeName) =
+        tc.Super(tree.unwrap, qual.unwrap, mix.unwrap).wrap
+      def This(tree: Tree, qual: Name) =
+        tc.This(tree.unwrap, qual.toTypeName.unwrap).wrap
+      def Select(tree: Tree, qualifier: Tree, selector: Name) =
+        tc.Select(tree.unwrap, qualifier.unwrap, selector.unwrap).wrap
+      def Ident(tree: Tree, name: Name) =
+        tc.Ident(tree.unwrap, name.unwrap).wrap
+      def RefTree(tree: Tree, qualifier: Tree, selector: Name) =
+        tc.RefTree(tree.unwrap, qualifier.unwrap, selector.unwrap).wrap
+      def ReferenceToBoxed(tree: Tree, idt: Ident) =
+        tc.ReferenceToBoxed(tree.unwrap, idt.unwrap).wrap
+      def Literal(tree: Tree, value: Constant) =
+        tc.Literal(tree.unwrap, value.unwrap).wrap
+      def TypeTree(tree: Tree) =
+        tc.TypeTree(tree.unwrap).wrap
+      def Annotated(tree: Tree, annot: Tree, arg: Tree) =
+        tc.Annotated(tree.unwrap, annot.unwrap, arg.unwrap).wrap
+      def SingletonTypeTree(tree: Tree, ref: Tree) =
+        tc.SingletonTypeTree(tree.unwrap, ref.unwrap).wrap
+      def SelectFromTypeTree(tree: Tree, qualifier: Tree, selector: Name) =
+        tc.SelectFromTypeTree(tree.unwrap, qualifier.unwrap, selector.toTypeName.unwrap).wrap
+      def CompoundTypeTree(tree: Tree, templ: Template) =
+        tc.CompoundTypeTree(tree.unwrap, templ.unwrap).wrap
+      def AppliedTypeTree(tree: Tree, tpt: Tree, args: List[Tree]) =
+        tc.AppliedTypeTree(tree.unwrap, tpt.unwrap, args.map(_.unwrap)).wrap
+      def TypeBoundsTree(tree: Tree, lo: Tree, hi: Tree) =
+        tc.TypeBoundsTree(tree.unwrap, lo.unwrap, hi.unwrap).wrap
+      def ExistentialTypeTree(tree: Tree, tpt: Tree, whereClauses: List[MemberDef]) =
+        tc.ExistentialTypeTree(tree.unwrap, tpt.unwrap, whereClauses.map(_.unwrap)).wrap
+    }
+    def newLazyTreeCopier: TreeCopier = new AdaptingTreeCopier(c.universe.newLazyTreeCopier)
+    def newStrictTreeCopier: TreeCopier = new AdaptingTreeCopier(c.universe.newStrictTreeCopier)
 
     type CompilerModifiers = c.universe.Modifiers
     type OurModifiers = Modifiers

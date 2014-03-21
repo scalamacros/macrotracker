@@ -10,8 +10,17 @@ trait Symbols {
     type CompilerSymbol = c.universe.Symbol
     type OurSymbol = universe.Symbol
     implicit class RichCompilerSymbol(sym: CompilerSymbol) {
-      def wrap: OurSymbol = {
-        ???
+      def wrap: OurSymbol = sym match {
+        case null => null
+        case c.universe.NoSymbol => NoSymbol
+        case sym if c.universe.FreeTypeSymbolTag.runtimeClass.isInstance(sym) => sym.asInstanceOf[c.universe.FreeTypeSymbol].wrap
+        case sym if c.universe.FreeTermSymbolTag.runtimeClass.isInstance(sym) => sym.asInstanceOf[c.universe.FreeTermSymbol].wrap
+        case sym if c.universe.ClassSymbolTag.runtimeClass.isInstance(sym) => sym.asInstanceOf[c.universe.ClassSymbol].wrap
+        case sym if c.universe.ModuleSymbolTag.runtimeClass.isInstance(sym) => sym.asInstanceOf[c.universe.ModuleSymbol].wrap
+        case sym if c.universe.MethodSymbolTag.runtimeClass.isInstance(sym) => sym.asInstanceOf[c.universe.MethodSymbol].wrap
+        case sym if c.universe.TypeSymbolTag.runtimeClass.isInstance(sym) => sym.asInstanceOf[c.universe.TypeSymbol].wrap
+        case sym if c.universe.TermSymbolTag.runtimeClass.isInstance(sym) => sym.asInstanceOf[c.universe.TermSymbol].wrap
+        case _ => throw new Exception(s"don't know how to wrap $sym (${c.universe.showDecl(sym)}) of class ${sym.getClass}")
       }
     }
     implicit class RichOurSymbol(sym: OurSymbol) { def unwrap: CompilerSymbol = sym.sym0 }
@@ -82,6 +91,7 @@ trait Symbols {
       def isStatic: Boolean = sym0.isStatic
       def isSynthetic: Boolean = sym0.isSynthetic
       def map(f: Symbol => Symbol): Symbol = sym0.map(sym => f(sym.wrap).unwrap).wrap
+      def name: NameType = sym0.name.wrap.asInstanceOf[NameType]
       def orElse(alt: => Symbol): Symbol = sym0.orElse(alt.unwrap).wrap
       def overrides: List[Symbol] = sym0.overrides.map(_.wrap)
       def owner: Symbol = sym0.owner.wrap
@@ -90,10 +100,11 @@ trait Symbols {
       def suchThat(cond: Symbol => Boolean): Symbol = sym0.suchThat(sym => cond(sym.wrap)).wrap
       def typeSignature: Type = sym0.typeSignature.wrap
       def typeSignatureIn(site: Type): Type = sym0.typeSignatureIn(site.unwrap).wrap
+      override def toString = sym0.toString
     }
 
     class TermSymbol(val sym: CompilerTermSymbol) extends Symbol(sym) with TermSymbolApi {
-      def name: TermName = sym.name.wrap
+      override def name: TermName = sym.name.wrap
       def accessed: Symbol = sym.accessed.wrap
       def getter: Symbol = sym.getter.wrap
       def isAccessor: Boolean = sym.isAccessor
@@ -112,7 +123,7 @@ trait Symbols {
     }
 
     class TypeSymbol(val sym: CompilerTypeSymbol) extends Symbol(sym) with TypeSymbolApi {
-      def name: TypeName = sym.name.wrap
+      override def name: TypeName = sym.name.wrap
       def isAbstractType: Boolean = sym.isAbstractType
       def isAliasType: Boolean = sym.isAliasType
       def isContravariant: Boolean = sym.isContravariant
@@ -164,6 +175,6 @@ trait Symbols {
       def origin: String = sym.origin
     }
 
-    val NoSymbol: OurSymbol = c.universe.NoSymbol.wrap
+    case object NoSymbol extends Symbol(c.universe.NoSymbol)
   }
 }

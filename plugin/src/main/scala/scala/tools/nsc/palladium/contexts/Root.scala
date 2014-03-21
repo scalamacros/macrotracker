@@ -10,7 +10,7 @@ trait Root extends NscContext with Universes with Trees with Symbols with Types 
 
   val prefix: OurExpr[PrefixType] = c.prefix.asInstanceOf[CompilerExpr[PrefixType]].wrap
   def macroApplication: OurTree = c.macroApplication.wrap
-  val mirror: OurMirror = universe.rootMirror
+  lazy val mirror: OurMirror = universe.rootMirror
 
   def Expr[T: OurWeakTypeTag](tree: OurTree): OurExpr[T] = universe.createExpr[T](tree)
   def WeakTypeTag[T](tpe: OurType): OurWeakTypeTag[T] = universe.createWeakTypeTag[T](tpe)

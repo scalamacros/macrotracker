@@ -247,7 +247,7 @@ trait Universes {
     implicit class RichCompilerMirror(m: CompilerMirror) { def wrap = new Mirror(m) }
     implicit class RichOurMirror(m: OurMirror) { def unwrap = m.m }
     class Mirror(val m: CompilerMirror) extends scala.reflect.api.Mirror[self.universe.type] {
-      val universe: self.universe.type = self.universe
+      lazy val universe: self.universe.type = self.universe
       def RootClass: OurClassSymbol = m.RootClass.wrap
       def RootPackage: OurModuleSymbol = m.RootPackage.wrap
       def EmptyPackageClass: OurClassSymbol = m.EmptyPackageClass.wrap
@@ -281,7 +281,7 @@ trait Universes {
     implicit class RichOurTermName(n: OurTermName) { def unwrap = c.universe.TermName(n.toString) }
     class TermName(n: CompilerTermName) extends Name(n) with TermNameApi
     object TermName extends TermNameExtractor {
-      def apply(s: String): OurTermName = newTermName(s)
+      def apply(s: String): OurTermName = new TermName(c.universe.TermName(s))
       def unapply(name: OurTermName): Option[String] = Some(name.toString)
     }
     type CompilerTypeName = c.universe.TypeName
@@ -290,7 +290,7 @@ trait Universes {
     implicit class RichOurTypeName(n: OurTypeName) { def unwrap = c.universe.TypeName(n.toString) }
     class TypeName(n: CompilerTypeName) extends Name(n) with TypeNameApi
     object TypeName extends TypeNameExtractor {
-      def apply(s: String): OurTypeName = newTypeName(s)
+      def apply(s: String): OurTypeName = new TypeName(c.universe.TypeName(s))
       def unapply(name: OurTypeName): Option[String] = Some(name.toString)
     }
     def newTermName(s: String): OurTermName = c.universe.newTermName(s).wrap.asInstanceOf[OurTermName]
@@ -308,13 +308,13 @@ trait Universes {
     def wrappingPos(default: OurPosition, trees: List[OurTree]): OurPosition = c.universe.wrappingPos(default.unwrap, trees.map(_.unwrap)).wrap
 
     // Members declared in scala.reflect.api.Printers
-    protected def newCodePrinter(out: java.io.PrintWriter,tree: Tree,printRootPkg: Boolean): TreePrinter = ??? // NOTE: never called when showCode is overridden
+    protected def newCodePrinter(out: java.io.PrintWriter,tree: Tree,printRootPkg: Boolean): TreePrinter = sys.error("this couldn't have happened") // NOTE: never called when showCode is overridden
     override def showCode(tree: Tree, printTypes: BooleanFlag = None, printIds: BooleanFlag = None, printOwners: BooleanFlag = None, printPositions: BooleanFlag = None, printRootPkg: Boolean = false) =
       c.universe.showCode(tree.unwrap, c.universe.BooleanFlag(printTypes.value), c.universe.BooleanFlag(printIds.value), c.universe.BooleanFlag(printOwners.value), c.universe.BooleanFlag(printPositions.value), printRootPkg)
-    protected def newRawTreePrinter(out: java.io.PrintWriter): TreePrinter = ??? // NOTE: never called when showRaw is overridden
+    protected def newRawTreePrinter(out: java.io.PrintWriter): TreePrinter = sys.error("this couldn't have happened") // NOTE: never called when showRaw is overridden
     override def showRaw(any: Any, printTypes: BooleanFlag = None, printIds: BooleanFlag = None, printOwners: BooleanFlag = None, printKinds: BooleanFlag = None, printMirrors: BooleanFlag = None, printPositions: BooleanFlag = None): String =
       c.universe.showRaw(unwrapAny(any), c.universe.BooleanFlag(printTypes.value), c.universe.BooleanFlag(printIds.value), c.universe.BooleanFlag(printOwners.value), c.universe.BooleanFlag(printKinds.value), c.universe.BooleanFlag(printMirrors.value), c.universe.BooleanFlag(printPositions.value))
-    protected def newTreePrinter(out: java.io.PrintWriter): TreePrinter = ??? // NOTE: never called when show is overridden
+    protected def newTreePrinter(out: java.io.PrintWriter): TreePrinter = sys.error("this couldn't have happened") // NOTE: never called when show is overridden
     override def show(any: Any, printTypes: BooleanFlag = None, printIds: BooleanFlag = None, printOwners: BooleanFlag = None, printKinds: BooleanFlag = None, printMirrors: BooleanFlag = None, printPositions: BooleanFlag = None): String =
       c.universe.show(unwrapAny(any), c.universe.BooleanFlag(printTypes.value), c.universe.BooleanFlag(printIds.value), c.universe.BooleanFlag(printOwners.value), c.universe.BooleanFlag(printKinds.value), c.universe.BooleanFlag(printMirrors.value), c.universe.BooleanFlag(printPositions.value))
     def show(position: Position): String = c.universe.show(position.unwrap)
@@ -509,7 +509,7 @@ trait Universes {
       case tt: WeakTypeTag[_] => tt.unwrap
       case s: Symbol => s.unwrap
       case xs: List[_] => xs.map(unwrapAny)
-      case _ => throw new Exception(s"don't know how to unwrap $any of class ${any.getClass}")
+      case _ => throw new Exception(s"don't know how to unwrap $any (${c.universe.showRaw(any)}) of class ${any.getClass}")
     }
   }
 }
