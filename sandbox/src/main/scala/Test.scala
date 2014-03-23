@@ -1,3 +1,3 @@
 object Test extends App {
-  println("Hello world!")
+  Macros.foo(2)
 }
