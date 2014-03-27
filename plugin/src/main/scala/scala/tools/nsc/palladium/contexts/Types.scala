@@ -67,13 +67,24 @@ trait Types {
       def =:=(that: Type): Boolean = tpe0 =:= that.unwrap
       def <:<(that: Type): Boolean = tpe0 <:< that.unwrap
       def asSeenFrom(pre: Type,clazz: Symbol): Type = tpe0.asSeenFrom(pre.unwrap, clazz.unwrap).wrap
-      def baseClasses: List[Symbol] = tpe0.baseClasses.map(_.wrap)
+      def baseClasses: List[Symbol] = {
+        touchedSymbols ++= tpe0.baseClasses
+        tpe0.baseClasses.map(_.wrap)
+      }
       def baseType(clazz: Symbol): Type = tpe0.baseType(clazz.unwrap).wrap
       def companion: Type = tpe0.companion.wrap
       def contains(sym: Symbol): Boolean = tpe0.contains(sym.unwrap)
       def dealias: Type = tpe0.dealias.wrap
-      def decl(name: Name): Symbol = tpe0.decl(name.unwrap).wrap
-      def declaration(name: Name): Symbol = tpe0.declaration(name.unwrap).wrap
+      def decl(name: Name): Symbol = {
+        val sym = tpe0.decl(name.unwrap)
+        touchedSymbols += sym
+        sym.wrap
+      }
+      def declaration(name: Name): Symbol = {
+        val sym = tpe0.declaration(name.unwrap)
+        touchedSymbols += sym
+        sym.wrap
+      }
       def declarations: MemberScope = tpe0.declarations.wrap
       def decls: MemberScope = tpe0.decls.wrap
       def erasure: Type = tpe0.erasure.wrap
@@ -83,21 +94,46 @@ trait Types {
       def find(p: Type => Boolean): Option[Type] = tpe0.find(t => p(t.wrap)).map(_.wrap)
       def foreach(f: Type => Unit): Unit = tpe0.foreach(t => f(t.wrap))
       def map(f: Type => Type): Type = tpe0.map(t => f(t.wrap).unwrap).wrap
-      def member(name: Name): Symbol = tpe0.member(name.unwrap).wrap
-      def members: MemberScope = tpe0.members.wrap
+      def member(name: Name): Symbol = {
+        val sym = tpe0.member(name.unwrap)
+        touchedSymbols += sym
+        sym.wrap
+      }
+      def members: MemberScope = {
+        touchedSymbols ++= tpe0.members.sorted
+        tpe0.members.wrap
+      }
       def normalize: Type = tpe0.normalize.wrap
       def orElse(alt: => Type): Type = tpe0.orElse(alt.unwrap).wrap
-      def paramLists: List[List[Symbol]] = tpe0.paramLists.map(_.map(_.wrap))
-      def paramss: List[List[Symbol]] = tpe0.paramss.map(_.map(_.wrap))
+      def paramLists: List[List[Symbol]] = {
+        val syms = tpe0.paramLists
+        syms.foreach(touchedSymbols ++= _)
+        syms.map(_.map(_.wrap))
+      }
+      def paramss: List[List[Symbol]] = {
+        val syms = tpe0.paramss
+        syms.foreach(touchedSymbols ++= _)
+        syms.map(_.map(_.wrap))
+      }
       def resultType: Type = tpe0.resultType.wrap
       def substituteSymbols(from: List[Symbol],to: List[Symbol]): Type = tpe0.substituteSymbols(from.map(_.unwrap), to.map(_.unwrap)).wrap
       def substituteTypes(from: List[Symbol],to: List[Type]): Type = tpe0.substituteTypes(from.map(_.unwrap), to.map(_.unwrap)).wrap
       def takesTypeArgs: Boolean = tpe0.takesTypeArgs
-      def termSymbol: Symbol = tpe0.termSymbol.wrap
+      def termSymbol: Symbol = {
+        touchedSymbols += tpe0.termSymbol
+        tpe0.termSymbol.wrap
+      }
       def typeArgs: List[Type] = tpe0.typeArgs.map(_.wrap)
       def typeConstructor: Type = tpe0.typeConstructor.wrap
-      def typeParams: List[Symbol] = tpe0.typeParams.map(_.wrap)
-      def typeSymbol: Symbol = tpe0.typeSymbol.wrap
+      def typeParams: List[Symbol] = {
+        val syms = tpe0.typeParams
+        touchedSymbols ++= syms
+        syms.map(_.wrap)
+      }
+      def typeSymbol: Symbol = {
+        touchedSymbols += tpe0.typeSymbol
+        tpe0.typeSymbol.wrap
+      }
       def weak_<:<(that: Type): Boolean = tpe0 weak_<:< that.unwrap
       def widen: Type = tpe0.widen.wrap
       override def toString = tpe0.toString
@@ -136,7 +172,11 @@ trait Types {
     }
 
     class ExistentialType(val tpe: c.universe.ExistentialType) extends Type(tpe) with ExistentialTypeApi {
-      def quantified: List[Symbol] = tpe.quantified.map(_.wrap)
+      def quantified: List[Symbol] = {
+        val syms = tpe.quantified
+        touchedSymbols ++= syms
+        syms.map(_.wrap)
+      }
       def underlying: Type = tpe.underlying.wrap
     }
     object ExistentialType extends ExistentialTypeExtractor {
@@ -144,7 +184,11 @@ trait Types {
     }
 
     class MethodType(val tpe: c.universe.MethodType) extends Type(tpe) with MethodTypeApi {
-      def params: List[Symbol] = tpe.params.map(_.wrap)
+      def params: List[Symbol] = {
+        val syms = tpe.params
+        touchedSymbols ++= syms
+        syms.map(_.wrap)
+      }
     }
     object MethodType extends MethodTypeExtractor {
       def unapply(tpe: MethodType): Option[(List[Symbol], Type)] = c.universe.MethodType.unapply(tpe.unwrap).map { case (x1, x2) => (x1.map(_.wrap), x2.wrap) }
@@ -174,7 +218,10 @@ trait Types {
 
     class SingleType(override val tpe: c.universe.SingleType) extends SingletonType(tpe) with SingleTypeApi {
       def pre: Type = tpe.pre.wrap
-      def sym: Symbol = tpe.sym.wrap
+      def sym: Symbol = {
+        touchedSymbols += tpe.sym
+        tpe.sym.wrap
+      }
     }
     object SingleType extends SingleTypeExtractor {
       def unapply(tpe: SingleType): Option[(Type, Symbol)] = c.universe.SingleType.unapply(tpe.unwrap).map { case (x1, x2) => (x1.wrap, x2.wrap) }
@@ -189,7 +236,10 @@ trait Types {
     }
 
     class ThisType(override val tpe: c.universe.ThisType) extends SingletonType(tpe) with ThisTypeApi {
-      def sym: Symbol = tpe.sym.wrap
+      def sym: Symbol = {
+        touchedSymbols += tpe.sym
+        tpe.sym.wrap
+      }
     }
     object ThisType extends ThisTypeExtractor {
       def unapply(tpe: ThisType): Option[Symbol] = c.universe.ThisType.unapply(tpe.unwrap).map(_.wrap)
@@ -205,7 +255,10 @@ trait Types {
 
     class TypeRef(val tpe: c.universe.TypeRef) extends Type(tpe) with TypeRefApi {
       def pre: Type = tpe.pre.wrap
-      def sym: Symbol = tpe.sym.wrap
+      def sym: Symbol = {
+        touchedSymbols += tpe.sym
+        tpe.sym.wrap
+      }
       def args: List[Type] = tpe.args.map(_.wrap)
     }
     object TypeRef extends TypeRefExtractor {

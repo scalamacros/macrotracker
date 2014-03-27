@@ -451,7 +451,11 @@ trait Universes {
     implicit class RichCompilerTypeTag[T](tt: CompilerTypeTag[T]) { def wrap = createTypeTag[T](tt.tpe.wrap) }
     implicit class RichOurTypeTag[T](tt: OurTypeTag[T]) { def unwrap = c.universe.TypeTag[T](c.mirror, FixedMirrorTypeCreator(c.mirror, tt.tpe.unwrap)) }
     def createTypeTag[T](tpe: OurType): OurTypeTag[T] = TypeTag[T](mirror, FixedMirrorTypeCreator(mirror, tpe))
-    def symbolOf[T: WeakTypeTag]: TypeSymbol = c.universe.symbolOf[T](implicitly[WeakTypeTag[T]].unwrap).wrap
+    def symbolOf[T: WeakTypeTag]: TypeSymbol = {
+      val sym = c.universe.symbolOf[T](implicitly[WeakTypeTag[T]].unwrap)
+      touchedSymbols += sym
+      sym.wrap
+    }
     case class FixedMirrorTypeCreator(mirror: ApiMirror[_ <: ApiUniverse with Singleton], tpe: Any) extends TypeCreator {
       def apply[U <: ApiUniverse with Singleton](m: ApiMirror[U]): U # Type =
         if (m eq mirror) tpe.asInstanceOf[U # Type]
