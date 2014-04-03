@@ -328,22 +328,14 @@ trait Universes {
     implicit class RichCompilerScope(s: CompilerScope) { def wrap = new OurScope(s) }
     implicit class RichOurScope(s: OurScope) { def unwrap = s.s0 }
     class Scope(val s0: CompilerScope) extends ScopeApi {
-      def iterator: Iterator[OurSymbol] = {
-        val syms = s0.iterator
-        touchedSymbols ++= syms
-        syms.map(_.wrap)
-      }
+      def iterator: Iterator[OurSymbol] = s0.iterator.map(_.wrap)
     }
     type CompilerMemberScope = c.universe.MemberScope
     type OurMemberScope = MemberScope
     implicit class RichCompilerMemberScope(s: CompilerMemberScope) { def wrap = new OurMemberScope(s) }
     implicit class RichOurMemberScope(s: OurMemberScope) { def unwrap = s.s1 }
     class MemberScope(val s1: CompilerMemberScope) extends Scope(s1) with MemberScopeApi {
-      def sorted: List[OurSymbol] = {
-        val syms = s1.sorted
-        touchedSymbols ++= syms
-        syms.map(_.wrap)
-      }
+      def sorted: List[OurSymbol] = s1.sorted.map(_.wrap)
     }
 
     // Members declared in scala.reflect.api.StandardDefinitions
