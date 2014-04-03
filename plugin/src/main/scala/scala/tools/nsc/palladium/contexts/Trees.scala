@@ -139,10 +139,7 @@ trait Trees {
       def nonEmpty: Boolean = t0.nonEmpty
       def orElse(alt: => Tree): Tree = t0.orElse(alt.unwrap).wrap
       def pos: Position = t0.pos.wrap
-      def symbol: Symbol = {
-        touchedSymbols += t0.symbol
-        t0.symbol.wrap
-      }
+      def symbol: Symbol = t0.symbol.wrap
       def tpe: Type = t0.tpe.wrap
       def withFilter(f: Tree => Boolean): List[Tree] = t0.withFilter(t => f(t.wrap)).map(_.wrap)
       override def hashCode(): Int = System.identityHashCode(this)
@@ -159,10 +156,7 @@ trait Trees {
 
     trait SymTree extends Tree with SymTreeApi {
       val t: c.universe.SymTree
-      override def symbol: Symbol = {
-        touchedSymbols += t.symbol
-        t.symbol.wrap
-      }
+      override def symbol: Symbol = t.symbol.wrap
     }
 
     trait NameTree extends Tree with NameTreeApi {

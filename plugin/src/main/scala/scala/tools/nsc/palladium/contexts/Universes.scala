@@ -328,14 +328,22 @@ trait Universes {
     implicit class RichCompilerScope(s: CompilerScope) { def wrap = new OurScope(s) }
     implicit class RichOurScope(s: OurScope) { def unwrap = s.s0 }
     class Scope(val s0: CompilerScope) extends ScopeApi {
-      def iterator: Iterator[OurSymbol] = s0.iterator.map(_.wrap)
+      def iterator: Iterator[OurSymbol] = {
+        val syms = s0.iterator
+        touchedSymbols ++= syms
+        syms.map(_.wrap)
+      }
     }
     type CompilerMemberScope = c.universe.MemberScope
     type OurMemberScope = MemberScope
     implicit class RichCompilerMemberScope(s: CompilerMemberScope) { def wrap = new OurMemberScope(s) }
     implicit class RichOurMemberScope(s: OurMemberScope) { def unwrap = s.s1 }
     class MemberScope(val s1: CompilerMemberScope) extends Scope(s1) with MemberScopeApi {
-      def sorted: List[OurSymbol] = s1.sorted.map(_.wrap)
+      def sorted: List[OurSymbol] = {
+        val syms = s1.sorted
+        touchedSymbols ++= syms
+        syms.map(_.wrap)
+      }
     }
 
     // Members declared in scala.reflect.api.StandardDefinitions
@@ -451,11 +459,7 @@ trait Universes {
     implicit class RichCompilerTypeTag[T](tt: CompilerTypeTag[T]) { def wrap = createTypeTag[T](tt.tpe.wrap) }
     implicit class RichOurTypeTag[T](tt: OurTypeTag[T]) { def unwrap = c.universe.TypeTag[T](c.mirror, FixedMirrorTypeCreator(c.mirror, tt.tpe.unwrap)) }
     def createTypeTag[T](tpe: OurType): OurTypeTag[T] = TypeTag[T](mirror, FixedMirrorTypeCreator(mirror, tpe))
-    def symbolOf[T: WeakTypeTag]: TypeSymbol = {
-      val sym = c.universe.symbolOf[T](implicitly[WeakTypeTag[T]].unwrap)
-      touchedSymbols += sym
-      sym.wrap
-    }
+    def symbolOf[T: WeakTypeTag]: TypeSymbol = c.universe.symbolOf[T](implicitly[WeakTypeTag[T]].unwrap).wrap
     case class FixedMirrorTypeCreator(mirror: ApiMirror[_ <: ApiUniverse with Singleton], tpe: Any) extends TypeCreator {
       def apply[U <: ApiUniverse with Singleton](m: ApiMirror[U]): U # Type =
         if (m eq mirror) tpe.asInstanceOf[U # Type]
