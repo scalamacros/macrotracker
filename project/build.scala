@@ -119,6 +119,16 @@ object build extends Build {
     }
   )
 
+  // This is very similar to usePluginSettings, except that we don't add the plugin
+  // to the compiler.
+  lazy val rebuildWhenPluginIsChangedSettings = Seq(
+    scalacOptions in Compile <++= (Keys.`package` in (plugin, Compile)) map { (jar: File) =>
+      System.setProperty("scalahost.plugin.jar", jar.getAbsolutePath)
+      val dummy = "-Jdummy=" + jar.lastModified
+      Seq(dummy)
+    }
+  )
+
   lazy val plugin = Project(
     id   = "scalahost",
     base = file("plugin")
@@ -143,8 +153,9 @@ object build extends Build {
     id   = "tests",
     base = file("tests")
   ) settings (
-    sharedSettings: _*
-    //sharedSettings ++ usePluginSettings: _*
+    // Running the tests with the plugin causes problem with scalatest's assert()
+    // which is a macro =(
+    sharedSettings ++ rebuildWhenPluginIsChangedSettings: _*
   ) settings (
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
