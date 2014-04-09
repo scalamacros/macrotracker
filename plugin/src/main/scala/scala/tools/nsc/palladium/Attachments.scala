@@ -1,5 +1,12 @@
 package scala.tools.nsc.palladium
 
-class ExpansionSummaryAttachment(val global: scala.tools.nsc.Global) {
-  var touchedSymbols: List[global.Symbol] = Nil
+class OurAttachment(val global: scala.tools.nsc.Global) {
+
+  def attachment = new ExpansionSummaryAttachment
+
+  class ExpansionSummaryAttachment extends global.ImportableAttachment {
+    def importAttachment(importer: global.Importer) = this
+    var touchedSymbols: List[global.Symbol] = Nil
+  }
+
 }

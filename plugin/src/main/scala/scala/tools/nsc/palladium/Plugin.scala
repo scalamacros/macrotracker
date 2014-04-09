@@ -96,8 +96,9 @@ class Plugin(val global: Global) extends NscPlugin { self =>
         override def onSuccess(expanded: Tree): Tree = {
           val result = super.onSuccess(expanded)
           loadContext(expandee).foreach(c1 => {
-            val summary = new ExpansionSummaryAttachment(global)
-            summary.touchedSymbols = c1.touchedSymbols.toList.asInstanceOf[List[summary.global.Symbol]]
+            val our = new OurAttachment(global)
+            val summary = our.attachment
+            summary.touchedSymbols = c1.touchedSymbols.toList.asInstanceOf[List[our.global.Symbol]]
             expandee.updateAttachment(summary)
             result.updateAttachment(summary)
           })
