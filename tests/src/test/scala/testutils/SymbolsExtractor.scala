@@ -1,21 +1,20 @@
 package testutils
 
 import testcompiler.TestCompiler
+import scala.reflect.internal._
+import scala.reflect.runtime.universe._
+import scala.tools.nsc.palladium._
 
 import scala.language.reflectiveCalls
 
 object SymbolsExtractor {
 
-	def apply(compiler: TestCompiler): List[List[compiler.Symbol]] = {
-		if(compiler.units.isEmpty) {
-			Nil
-		} else {
-			compiler.units.head.body.collect {
-				case t: compiler.Tree if!t.attachments.isEmpty => t.attachments.all.collect {
-					case _: compiler.analyzer.MacroExpansionAttachment => Nil
-					case expansionSummary: { def touchedSymbols: List[compiler.Symbol] } => expansionSummary.touchedSymbols
-				}
-	      	}.flatten.filterNot(_.isEmpty)
+	def apply(compiler: TestCompiler) =
+		compiler.trees.map {
+			case t: {def attachments: scala.reflect.macros.Attachments } =>
+				t.attachments.all.collect {
+					case esa: { def touchedSymbols: List[_] } =>
+						esa.touchedSymbols
+				}.toList.flatten
 		}
-	}
 }

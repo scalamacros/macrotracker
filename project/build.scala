@@ -109,6 +109,7 @@ object build extends Build {
 
   lazy val usePluginSettings = Seq(
     scalacOptions in Compile <++= (Keys.`package` in (plugin, Compile)) map { (jar: File) =>
+      System.setProperty("scalahost.plugin.jar", jar.getAbsolutePath)
       val addPlugin = "-Xplugin:" + jar.getAbsolutePath
       // Thanks Jason for this cool idea (taken from https://github.com/retronym/boxer)
       // add plugin timestamp to compiler options to trigger recompile of
@@ -142,12 +143,17 @@ object build extends Build {
     id   = "tests",
     base = file("tests")
   ) settings (
-    sharedSettings ++ usePluginSettings: _*
+    sharedSettings: _*
+    //sharedSettings ++ usePluginSettings: _*
   ) settings (
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
     libraryDependencies += "org.scalatest" %% "scalatest" % "2.1.2" % "test",
     libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.11.3" % "test",
-    scalacOptions ++= Seq()
+    libraryDependencies += ("org.scalareflect" % "scalahost_2.11.0-RC3" % "0.1.0-SNAPSHOT"),
+    compile in Test := {
+      sys.props("sbt.class.directory") = (classDirectory in Test).value.getAbsolutePath
+      (compile in Test).value
+    }
   )
 }
