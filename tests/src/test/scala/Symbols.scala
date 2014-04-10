@@ -5,23 +5,42 @@ import testutils.SymbolsExtractor
 /**
  * This test suite tests that all symbols retrieved during a macro expansion
  * through the SymbolApi are correctly registered.
- *
- * The defaultProvider uses weakTypeOf[] to get a Type. weakTypeOf is implemented
- * as a macro, which causes exactly 4 symbols to be added. Then we use Type.typeSymbol,
- * which causes 2 more symbols to be added. To get rid of them, we drop 6 symbols.
  */
 
 class SymbolsSuite extends FunSuite {
 
+  test("Test Symbol.alternatives") {
+    val compiler = new TestCompiler
+
+    compiler.compile("ProviderForSymbols.testAlternatives")
+
+    val allTouchedSymbols = SymbolsExtractor(compiler).flatten
+    val alternatives = allTouchedSymbols.collect { case s if s.toString == "method iHaveAnAlternative" => s }
+
+    assert(alternatives.size == 2, s"Expected to find 2 alternatives, ${alternatives.size} found.")
+    assert(alternatives.head != alternatives.tail.head, "Both alternatives are the same symbol")
+  }
+
+  test("Test Symbol.overrides") {
+    val compiler = new TestCompiler
+
+    compiler.compile("ProviderForSymbols.testOverrides")
+
+    val allTouchedSymbols = SymbolsExtractor(compiler).flatten
+    val overriden = allTouchedSymbols.collect { case s if s.toString == "method overrideMe" => s }
+
+    assert(overriden.size == 2, s"Expected to find 2 symbols, ${overriden.size} found.")
+    assert(overriden.head != overriden.last, "Both symbols are the same.")
+  }
+
   test("Test Symbol.owner") {
     val compiler = new TestCompiler
 
-    compiler.compile("ProviderForSymbols.testMacro")
+    compiler.compile("ProviderForSymbols.testOwner")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.drop(6)
+    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
 
-    assert(!allTouchedSymbols.isEmpty, "No symbols collected")
-    assert(allTouchedSymbols.head.toString == "package observed", "Wrong owner")
+    assert(allTouchedSymbols.contains("package observed"), "Wrong owner")
   }
 }
 
@@ -33,8 +52,24 @@ import scala.reflect.macros.whitebox.Context
 import scala.reflect.macros._
 
 object ProviderForSymbols {
-  def testMacro: Unit = macro testMacroImpl
-  def testMacroImpl(c: Context) = {
+  def testAlternatives: Unit = macro testAlternativesImpl
+  def testAlternativesImpl(c: Context) = {
+    import c.universe._
+    val tpe = typeOf[observed.Observed.type]
+    val alternatives = tpe.decl(newTermName("iHaveAnAlternative")).alternatives
+    q"""println(${alternatives.toString})"""
+  }
+
+  def testOverrides: Unit = macro testOverridesImpl
+  def testOverridesImpl(c: Context) = {
+    import c.universe._
+    val tpe = typeOf[observed.Observed.type]
+    val overriden = tpe.decl(newTermName("overrideMe")).overrides
+    q"""println(${overriden.toString})"""
+  }
+
+  def testOwner: Unit = macro testOwnerImpl
+  def testOwnerImpl(c: Context) = {
     import c.universe._
     val tpe = c.weakTypeOf[observed.Observed.type]
     val sym = tpe.typeSymbol

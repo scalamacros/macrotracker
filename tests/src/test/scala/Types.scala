@@ -5,10 +5,6 @@ import testutils.SymbolsExtractor
 /**
  * This test suite tests that all symbols retrieved during a macro expansion
  * through the TypeApi are correctly registered.
- *
- * The defaultProvider uses weakTypeOf[] to get a Type. weakTypeOf is implemented
- * as a macro, which causes exactly 4 symbols to be added. To get rid of them, we
- * drop 4 symbols.
  */
 
 class TypesSuite extends FunSuite {
@@ -18,12 +14,12 @@ class TypesSuite extends FunSuite {
 
     compiler.compile("ProviderForTypes.testMembers")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.drop(4)
+    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
 
-    if(allTouchedSymbols.isEmpty) fail("No symbols collected")
-    else if(!allTouchedSymbols.contains("value foo")) fail("`val foo` has been touched but not registered")
-    else if(!allTouchedSymbols.contains("method bar")) fail("`def bar` has been touched but not registered")
-    else if(!allTouchedSymbols.contains("method baz")) fail("`def baz` has been touched but not registered")
+    assert(!allTouchedSymbols.isEmpty, "No symbols collected")
+    assert(allTouchedSymbols.contains("value foo"), "`val foo` has been touched but not registered")
+    assert(allTouchedSymbols.contains("value bar"), "`val bar` has been touched but not registered")
+    assert(allTouchedSymbols.contains("method baz"), "`def baz` has been touched but not registered")
   }
 
   test("Test Type.baseClasses") {
@@ -31,72 +27,56 @@ class TypesSuite extends FunSuite {
 
     compiler.compile("ProviderForTypes.testBaseClasses")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.drop(4)
+    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
 
-    if(allTouchedSymbols.isEmpty) fail("No symbols collected")
-    if(allTouchedSymbols.size > 1) fail(s"${allTouchedSymbols.size} symbols collected (expected 1)")
-    if(allTouchedSymbols.head.toString != "class SuperClass") fail("`class SuperClass` has been touched but not registered")
+    assert(allTouchedSymbols.contains("class SuperClass"), "`class SuperClass` has been touched but not registered")
+    assert(allTouchedSymbols.contains("class Object"), "`class Object` has been touched but not registered")
+    assert(allTouchedSymbols.contains("class Any"), "`class Any` has been touched but not registered")
   }
 
-/*  test("Test Type.decl") { f =>
-    val compiler = new TestCompiler(DefaultSettings(f.dir))
-    val srcA = defaultProvider("tpe.decl(newTermName(\"bar\"))")
-    val srcB = defaultClient
+  test("Test Type.decl") {
+    val compiler = new TestCompiler
 
-    compiler.compile(List(srcA))
-    compiler.compile(List(srcB))
+    compiler.compile("ProviderForTypes.testDecl")
 
-    val allTouchedSymbolsAsStrings = SymbolsExtractor(compiler).flatten.map(_.toString).drop(4)
+    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
 
-    if(allTouchedSymbolsAsStrings.isEmpty) fail("No symbols collected")
-    else if(!allTouchedSymbolsAsStrings.contains("method bar")) fail("`def bar` has been touched but not registered")
+    assert(allTouchedSymbols.contains("value bar"), "`val bar` has been touched but not registered")
   }
 
-  test("Test Type.member") { f =>
-    val compiler = new TestCompiler(DefaultSettings(f.dir))
-    val srcA = defaultProvider("tpe.member(newTermName(\"bar\"))")
-    val srcB = defaultClient
+  test("Test Type.member") {
+    val compiler = new TestCompiler
 
-    compiler.compile(List(srcA))
-    compiler.compile(List(srcB))
+    compiler.compile("ProviderForTypes.testMember")
 
-    val allTouchedSymbolsAsStrings = SymbolsExtractor(compiler).flatten.map(_.toString).drop(4)
+    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
 
-    if(allTouchedSymbolsAsStrings.isEmpty) fail("No symbols collected")
-    else if(!allTouchedSymbolsAsStrings.contains("method bar")) fail("`def bar` has been touched but not registered")
+    assert(allTouchedSymbols.contains("value foo"), "`val foo` has been touched but not registered")
   }
 
   // Not sure how to to test this one
-  test("Test Type.paramLists") { f =>
+  test("Test Type.paramLists") {
   }
 
-  test("Test Type.termSymbol") { f =>
-    val compiler = new TestCompiler(DefaultSettings(f.dir))
-    val srcA = defaultProvider("tpe.termSymbol")
-    val srcB = defaultClient
+  test("Test Type.termSymbol") {
+    val compiler = new TestCompiler
 
-    compiler.compile(List(srcA))
-    compiler.compile(List(srcB))
+    compiler.compile("ProviderForTypes.testTermSymbol")
 
-    val allTouchedSymbolsAsStrings = SymbolsExtractor(compiler).flatten.map(_.toString).drop(4)
+    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
 
-    if(allTouchedSymbolsAsStrings.isEmpty) fail("No symbols collected")
-    else if(!allTouchedSymbolsAsStrings.contains("object Observed")) fail("`def bar` has been touched but not registered")
+    assert(allTouchedSymbols.contains("object Observed"), "`object Observed` has been touched but not registered")
   }
 
-  test("Test Type.typeSymbol") { f =>
-    val compiler = new TestCompiler(DefaultSettings(f.dir))
-    val srcA = defaultProvider("tpe.typeSymbol")
-    val srcB = defaultClient
+  test("Test Type.typeSymbol") {
+    val compiler = new TestCompiler
 
-    compiler.compile(List(srcA))
-    compiler.compile(List(srcB))
+    compiler.compile("ProviderForTypes.testTypeSymbol")
 
-    val allTouchedSymbolsAsStrings = SymbolsExtractor(compiler).flatten.map(_.toString).drop(4)
+    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
 
-    if(allTouchedSymbolsAsStrings.isEmpty) fail("No symbols collected")
-    else if(!allTouchedSymbolsAsStrings.contains("object Observed")) fail("`def bar` has been touched but not registered")
-  }*/
+    assert(allTouchedSymbols.contains("object Observed"), "`object Observed` has been touched but not registered")
+  }
 }
 
 /**
@@ -112,15 +92,47 @@ object ProviderForTypes {
     def testMembers: Unit = macro testMembersImpl
     def testMembersImpl(c: Context) = {
         import c.universe._
-        val tpe = c.weakTypeOf[observed.Observed.type]
+        val tpe = typeOf[observed.Observed.type]
         q"println(${tpe.members.toString})"
     }
 
     def testBaseClasses: Unit = macro testBaseClassesImpl
     def testBaseClassesImpl(c: Context) = {
         import c.universe._
-        val tpe = c.weakTypeOf[observed.Observed.type]
+        val tpe = typeOf[observed.Observed.type]
         q"println(${tpe.baseClasses.toString})"
+    }
+
+    def testDecl: Unit = macro testDeclImpl
+    def testDeclImpl(c: Context) = {
+        import c.universe._
+        val tpe = typeOf[observed.Observed.type]
+        val sym = tpe.decl(newTermName("bar"))
+        q"println(${sym.toString})"
+    }
+
+    def testMember: Unit = macro testMemberImpl
+    def testMemberImpl(c: Context) = {
+        import c.universe._
+        val tpe = typeOf[observed.Observed.type]
+        val sym = tpe.member(newTermName("foo"))
+        q"println(${sym.toString})"
+    }
+
+    def testTermSymbol: Unit = macro testTermSymbolImpl
+    def testTermSymbolImpl(c: Context) = {
+        import c.universe._
+        val tpe = c.weakTypeOf[observed.Observed.type]
+        val sym = tpe.termSymbol
+        q"println(${sym.toString})"
+    }
+
+    def testTypeSymbol: Unit = macro testTypeSymbolImpl
+    def testTypeSymbolImpl(c: Context) = {
+        import c.universe._
+        val tpe = typeOf[observed.Observed.type]
+        val sym = tpe.typeSymbol
+        q"println(${sym.toString})"
     }
 
 }
