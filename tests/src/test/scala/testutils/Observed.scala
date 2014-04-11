@@ -1,6 +1,6 @@
 package observed
 
-class SuperClass(val foo: Int) {
+class SuperClass[T](val foo: T) {
   def overrideMe = "Hello"
 }
 object Observed extends SuperClass(1) {

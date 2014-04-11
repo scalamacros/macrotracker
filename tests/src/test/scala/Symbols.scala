@@ -15,7 +15,7 @@ class SymbolsSuite extends FunSuite {
     compiler.compile("ProviderForSymbols.testAlternatives")
 
     val allTouchedSymbols = SymbolsExtractor(compiler).flatten
-    val alternatives = allTouchedSymbols.collect { case s if s.toString == "method iHaveAnAlternative" => s }
+    val alternatives = allTouchedSymbols.filter(_.toString == "method iHaveAnAlternative")
 
     assert(alternatives.size == 2, s"Expected to find 2 alternatives, ${alternatives.size} found.")
     assert(alternatives.head != alternatives.tail.head, "Both alternatives are the same symbol")
@@ -27,7 +27,7 @@ class SymbolsSuite extends FunSuite {
     compiler.compile("ProviderForSymbols.testOverrides")
 
     val allTouchedSymbols = SymbolsExtractor(compiler).flatten
-    val overriden = allTouchedSymbols.collect { case s if s.toString == "method overrideMe" => s }
+    val overriden = allTouchedSymbols.filter(_.toString == "method overrideMe")
 
     assert(overriden.size == 2, s"Expected to find 2 symbols, ${overriden.size} found.")
     assert(overriden.head != overriden.last, "Both symbols are the same.")

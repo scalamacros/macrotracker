@@ -56,6 +56,13 @@ class TypesSuite extends FunSuite {
 
   // Not sure how to to test this one
   test("Test Type.paramLists") {
+    val compiler = new TestCompiler
+
+    compiler.compile("ProviderForTypes.testParamLists")
+
+    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
+
+    assert(allTouchedSymbols.contains("class Float"), "`class Float` has been touched but not registered")
   }
 
   test("Test Type.termSymbol") {
@@ -117,6 +124,13 @@ object ProviderForTypes {
         val tpe = typeOf[observed.Observed.type]
         val sym = tpe.member(newTermName("foo"))
         q"println(${sym.toString})"
+    }
+
+    def testParamLists: Unit = macro testParamListsImpl
+    def testParamListsImpl(c: Context) = {
+        import c.universe._
+        val tpe = typeOf[observed.SuperClass[Float]]
+        q"println(${tpe.paramLists.toString})"
     }
 
     def testTermSymbol: Unit = macro testTermSymbolImpl
