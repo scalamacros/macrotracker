@@ -1,6 +1,5 @@
 import org.scalatest.FunSuite
 import testcompiler.TestCompiler
-import testutils.SymbolsExtractor
 
 /**
  * This test suite tests that all symbols retrieved during a macro expansion
@@ -14,7 +13,7 @@ class TypesSuite extends FunSuite {
 
     compiler.compile("ProviderForTypes.testMembers")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
+    val allTouchedSymbols = compiler.touchedSymbols.map(_.toString)
 
     assert(!allTouchedSymbols.isEmpty, "No symbols collected")
     assert(allTouchedSymbols.contains("value foo"), "`val foo` has been touched but not registered")
@@ -27,7 +26,7 @@ class TypesSuite extends FunSuite {
 
     compiler.compile("ProviderForTypes.testBaseClasses")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
+    val allTouchedSymbols = compiler.touchedSymbols.map(_.toString)
 
     assert(allTouchedSymbols.contains("class SuperClass"), "`class SuperClass` has been touched but not registered")
     assert(allTouchedSymbols.contains("class Object"), "`class Object` has been touched but not registered")
@@ -39,7 +38,7 @@ class TypesSuite extends FunSuite {
 
     compiler.compile("ProviderForTypes.testDecl")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
+    val allTouchedSymbols = compiler.touchedSymbols.map(_.toString)
 
     assert(allTouchedSymbols.contains("value bar"), "`val bar` has been touched but not registered")
   }
@@ -49,7 +48,7 @@ class TypesSuite extends FunSuite {
 
     compiler.compile("ProviderForTypes.testMember")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
+    val allTouchedSymbols = compiler.touchedSymbols.map(_.toString)
 
     assert(allTouchedSymbols.contains("value foo"), "`val foo` has been touched but not registered")
   }
@@ -60,7 +59,7 @@ class TypesSuite extends FunSuite {
 
     compiler.compile("ProviderForTypes.testParamLists")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
+    val allTouchedSymbols = compiler.touchedSymbols.map(_.toString)
 
     assert(allTouchedSymbols.contains("class Float"), "`class Float` has been touched but not registered")
   }
@@ -70,7 +69,7 @@ class TypesSuite extends FunSuite {
 
     compiler.compile("ProviderForTypes.testTermSymbol")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
+    val allTouchedSymbols = compiler.touchedSymbols.map(_.toString)
 
     assert(allTouchedSymbols.contains("object Observed"), "`object Observed` has been touched but not registered")
   }
@@ -80,7 +79,7 @@ class TypesSuite extends FunSuite {
 
     compiler.compile("ProviderForTypes.testTypeSymbol")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
+    val allTouchedSymbols = compiler.touchedSymbols.map(_.toString)
 
     assert(allTouchedSymbols.contains("object Observed"), "`object Observed` has been touched but not registered")
   }

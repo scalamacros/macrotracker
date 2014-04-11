@@ -1,6 +1,5 @@
 import org.scalatest.FunSuite
 import testcompiler.TestCompiler
-import testutils.SymbolsExtractor
 
 /**
  * This test suite tests that all symbols retrieved during a macro expansion
@@ -14,7 +13,7 @@ class SymbolsSuite extends FunSuite {
 
     compiler.compile("ProviderForSymbols.testAlternatives")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten
+    val allTouchedSymbols = compiler.touchedSymbols
     val alternatives = allTouchedSymbols.filter(_.toString == "method iHaveAnAlternative")
 
     assert(alternatives.size == 2, s"Expected to find 2 alternatives, ${alternatives.size} found.")
@@ -26,7 +25,7 @@ class SymbolsSuite extends FunSuite {
 
     compiler.compile("ProviderForSymbols.testOverrides")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten
+    val allTouchedSymbols = compiler.touchedSymbols
     val overriden = allTouchedSymbols.filter(_.toString == "method overrideMe")
 
     assert(overriden.size == 2, s"Expected to find 2 symbols, ${overriden.size} found.")
@@ -38,7 +37,7 @@ class SymbolsSuite extends FunSuite {
 
     compiler.compile("ProviderForSymbols.testOwner")
 
-    val allTouchedSymbols = SymbolsExtractor(compiler).flatten.map(_.toString)
+    val allTouchedSymbols = compiler.touchedSymbols.map(_.toString)
 
     assert(allTouchedSymbols.contains("package observed"), "Wrong owner")
   }

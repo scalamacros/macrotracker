@@ -1,6 +1,5 @@
 import testcompiler.TestCompiler
 import org.scalatest.FunSuite
-import testutils.SymbolsExtractor
 
 class BasicSuite extends FunSuite {
 
@@ -10,8 +9,8 @@ class BasicSuite extends FunSuite {
 
     compiler.compile(client)
 
-    val allTouchedSymbolsAsStrings = SymbolsExtractor(compiler).flatten
-    assert(allTouchedSymbolsAsStrings.isEmpty, s"${allTouchedSymbolsAsStrings.size} symbols collected (expected 0)")
+    val allTouchedSymbols = compiler.touchedSymbols
+    assert(allTouchedSymbols.isEmpty, s"${allTouchedSymbols.size} symbols collected (expected 0)")
   }
 
 }
