@@ -161,10 +161,11 @@ object build extends Build {
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
     libraryDependencies += "org.scalatest" %% "scalatest" % "2.1.2" % "test",
     libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.11.3" % "test",
-    libraryDependencies += ("org.scalareflect" % "scalahost_2.11.0-RC3" % "0.1.0-SNAPSHOT"),
     compile in Test := {
       sys.props("sbt.class.directory") = (classDirectory in Test).value.getAbsolutePath
       (compile in Test).value
     }
+  ) dependsOn (
+    plugin
   )
 }
