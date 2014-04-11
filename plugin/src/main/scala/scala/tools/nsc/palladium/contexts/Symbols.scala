@@ -27,37 +27,72 @@ trait Symbols {
 
     type CompilerTermSymbol = c.universe.TermSymbol
     type OurTermSymbol = universe.TermSymbol
-    implicit class RichCompilerTermSymbol(sym: CompilerTermSymbol) { def wrap = new OurTermSymbol(sym) }
+    implicit class RichCompilerTermSymbol(sym: CompilerTermSymbol) {
+      def wrap = {
+        touchedSymbols += sym
+        new OurTermSymbol(sym)
+      }
+    }
     implicit class RichOurTermSymbol(sym: OurTermSymbol) { def wrap = sym.sym }
 
     type CompilerTypeSymbol = c.universe.TypeSymbol
     type OurTypeSymbol = universe.TypeSymbol
-    implicit class RichCompilerTypeSymbol(sym: CompilerTypeSymbol) { def wrap = new OurTypeSymbol(sym) }
+    implicit class RichCompilerTypeSymbol(sym: CompilerTypeSymbol) {
+      def wrap = {
+        touchedSymbols += sym
+        new OurTypeSymbol(sym)
+      }
+    }
     implicit class RichOurTypeSymbol(sym: OurTypeSymbol) { def wrap = sym.sym }
 
     type CompilerMethodSymbol = c.universe.MethodSymbol
     type OurMethodSymbol = universe.MethodSymbol
-    implicit class RichCompilerMethodSymbol(sym: CompilerMethodSymbol) { def wrap = new OurMethodSymbol(sym) }
+    implicit class RichCompilerMethodSymbol(sym: CompilerMethodSymbol) {
+      def wrap = {
+        touchedSymbols += sym
+        new OurMethodSymbol(sym)
+      }
+    }
     implicit class RichOurMethodSymbol(sym: OurMethodSymbol) { def wrap = sym.sym }
 
     type CompilerModuleSymbol = c.universe.ModuleSymbol
     type OurModuleSymbol = universe.ModuleSymbol
-    implicit class RichCompilerModuleSymbol(sym: CompilerModuleSymbol) { def wrap = new OurModuleSymbol(sym) }
+    implicit class RichCompilerModuleSymbol(sym: CompilerModuleSymbol) {
+      def wrap = {
+        touchedSymbols += sym
+        new OurModuleSymbol(sym)
+      }
+    }
     implicit class RichOurModuleSymbol(sym: OurModuleSymbol) { def wrap = sym.sym }
 
     type CompilerClassSymbol = c.universe.ClassSymbol
     type OurClassSymbol = universe.ClassSymbol
-    implicit class RichCompilerClassSymbol(sym: CompilerClassSymbol) { def wrap = new OurClassSymbol(sym) }
+    implicit class RichCompilerClassSymbol(sym: CompilerClassSymbol) {
+      def wrap = {
+        touchedSymbols += sym
+        new OurClassSymbol(sym)
+      }
+    }
     implicit class RichOurClassSymbol(sym: OurClassSymbol) { def wrap = sym.sym }
 
     type CompilerFreeTermSymbol = c.universe.FreeTermSymbol
     type OurFreeTermSymbol = universe.FreeTermSymbol
-    implicit class RichCompilerFreeTermSymbol(sym: CompilerFreeTermSymbol) { def wrap = new OurFreeTermSymbol(sym) }
+    implicit class RichCompilerFreeTermSymbol(sym: CompilerFreeTermSymbol) {
+      def wrap = {
+        touchedSymbols += sym
+        new OurFreeTermSymbol(sym)
+      }
+    }
     implicit class RichOurFreeTermSymbol(sym: OurFreeTermSymbol) { def wrap = sym.sym }
 
     type CompilerFreeTypeSymbol = c.universe.FreeTypeSymbol
     type OurFreeTypeSymbol = universe.FreeTypeSymbol
-    implicit class RichCompilerFreeTypeSymbol(sym: CompilerFreeTypeSymbol) { def wrap = new OurFreeTypeSymbol(sym) }
+    implicit class RichCompilerFreeTypeSymbol(sym: CompilerFreeTypeSymbol) {
+      def wrap = {
+        touchedSymbols += sym
+        new OurFreeTypeSymbol(sym)
+      }
+    }
     implicit class RichOurFreeTypeSymbol(sym: OurFreeTypeSymbol) { def wrap = sym.sym }
 
     abstract class Symbol(val sym0: CompilerSymbol) extends SymbolApi {
