@@ -109,6 +109,7 @@ object build extends Build {
 
   lazy val usePluginSettings = Seq(
     scalacOptions in Compile <++= (Keys.`package` in (plugin, Compile)) map { (jar: File) =>
+      System.setProperty("scalahost.plugin.jar", jar.getAbsolutePath)
       val addPlugin = "-Xplugin:" + jar.getAbsolutePath
       // Thanks Jason for this cool idea (taken from https://github.com/retronym/boxer)
       // add plugin timestamp to compiler options to trigger recompile of
@@ -117,6 +118,26 @@ object build extends Build {
       Seq(addPlugin, dummy)
     }
   )
+
+  // This is very similar to usePluginSettings, except that we don't add the plugin
+  // to the compiler.
+  lazy val rebuildWhenPluginIsChangedSettings = Seq(
+    scalacOptions in Compile <++= (Keys.`package` in (plugin, Compile)) map { (jar: File) =>
+      System.setProperty("scalahost.plugin.jar", jar.getAbsolutePath)
+      val dummy = "-Jdummy=" + jar.lastModified
+      Seq(dummy)
+    }
+  )
+
+  lazy val root = Project(
+    id = "root",
+    base = file("root")
+  ) settings (
+    sharedSettings : _*
+  ) settings (
+    test in Test := (test in tests in Test).value,
+    packagedArtifacts := Map.empty
+  ) aggregate (plugin, tests)
 
   lazy val plugin = Project(
     id   = "scalahost",
@@ -142,10 +163,19 @@ object build extends Build {
     id   = "tests",
     base = file("tests")
   ) settings (
-    sharedSettings ++ usePluginSettings: _*
+    // Running the tests with the plugin causes problem with scalatest's assert()
+    // which is a macro =(
+    sharedSettings ++ rebuildWhenPluginIsChangedSettings: _*
   ) settings (
-    libraryDependencies += "org.scalatest" %% "scalatest" % "2.1.0" % "test",
+    libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
+    libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
+    libraryDependencies += "org.scalatest" %% "scalatest" % "2.1.2" % "test",
     libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.11.3" % "test",
-    scalacOptions ++= Seq()
+    compile in Test := {
+      sys.props("sbt.class.directory") = (classDirectory in Test).value.getAbsolutePath
+      (compile in Test).value
+    }
+  ) dependsOn (
+    plugin
   )
 }
