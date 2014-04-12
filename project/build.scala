@@ -129,6 +129,16 @@ object build extends Build {
     }
   )
 
+  lazy val root = Project(
+    id = "root",
+    base = file("root")
+  ) settings (
+    sharedSettings : _*
+  ) settings (
+    test in Test := (test in tests in Test).value,
+    packagedArtifacts := Map.empty
+  ) aggregate (plugin, tests)
+
   lazy val plugin = Project(
     id   = "scalahost",
     base = file("plugin")
