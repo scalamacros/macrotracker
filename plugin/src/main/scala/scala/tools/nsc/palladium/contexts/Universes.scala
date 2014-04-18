@@ -255,6 +255,7 @@ trait Universes {
       def staticClass(fullName: String): OurClassSymbol = m.staticClass(fullName).wrap
       def staticModule(fullName: String): OurModuleSymbol = m.staticModule(fullName).wrap
       def staticPackage(fullName: String): OurModuleSymbol = m.staticPackage(fullName).wrap
+      def symbolOf[T: WeakTypeTag]: OurTypeSymbol = m.symbolOf(implicitly[WeakTypeTag[T]].unwrap).wrap
     }
     val rootMirror: Mirror = c.universe.rootMirror.wrap
     type RuntimeClass = c.universe.RuntimeClass

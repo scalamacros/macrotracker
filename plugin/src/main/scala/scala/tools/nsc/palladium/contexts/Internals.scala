@@ -234,9 +234,13 @@ trait Internals {
         def apply(argtpes: List[Tree], restpe: Tree): Tree = c.universe.build.SyntacticFunctionType.apply(argtpes.map(_.unwrap), restpe.unwrap).wrap
         def unapply(tree: Tree): Option[(List[Tree], Tree)] = c.universe.build.SyntacticFunctionType.unapply(tree.unwrap).map { case (x1, x2) => (x1.map(_.wrap), x2.wrap) }
       }
-      val SyntacticIdent: SyntacticIdentExtractor = new SyntacticIdentExtractor {
-        def apply(name: Name, isBackquoted: Boolean = false): Ident = c.universe.build.SyntacticIdent.apply(name.unwrap, isBackquoted).wrap
-        def unapply(tree: Ident): Option[(Name, Boolean)] = c.universe.build.SyntacticIdent.unapply(tree.unwrap).map { case (x1, x2) => (x1.wrap, x2) }
+      val SyntacticTermIdent: SyntacticTermIdentExtractor = new SyntacticTermIdentExtractor {
+        def apply(name: TermName, isBackquoted: Boolean = false): Ident = c.universe.build.SyntacticTermIdent.apply(name.unwrap, isBackquoted).wrap
+        def unapply(tree: Ident): Option[(TermName, Boolean)] = c.universe.build.SyntacticTermIdent.unapply(tree.unwrap.asInstanceOf[c.universe.Ident]).map { case (x1, x2) => (x1.wrap, x2) }
+      }
+      val SyntacticTypeIdent: SyntacticTypeIdentExtractor = new SyntacticTypeIdentExtractor {
+        def apply(name: TypeName): Ident = c.universe.build.SyntacticTypeIdent.apply(name.unwrap).wrap
+        def unapply(tree: Tree): Option[TypeName] = c.universe.build.SyntacticTypeIdent.unapply(tree.unwrap).map(_.wrap)
       }
       val SyntacticImport: SyntacticImportExtractor = new SyntacticImportExtractor {
         def apply(expr: Tree, selectors: List[Tree]): Import = c.universe.build.SyntacticImport.apply(expr.unwrap, selectors.map(_.unwrap)).wrap
@@ -269,7 +273,7 @@ trait Internals {
       }
       val SyntacticPartialFunction: SyntacticPartialFunctionExtractor = new SyntacticPartialFunctionExtractor {
         def apply(cases: List[Tree]): Match = c.universe.build.SyntacticPartialFunction.apply(cases.map(_.unwrap)).wrap
-        def unapply(tree: Match): Option[List[CaseDef]] = c.universe.build.SyntacticPartialFunction.unapply(tree.unwrap).map(_.map(_.wrap))
+        def unapply(tree: Tree): Option[List[CaseDef]] = c.universe.build.SyntacticPartialFunction.unapply(tree.unwrap).map(_.map(_.wrap))
       }
       val SyntacticPatDef: SyntacticPatDefExtractor = new SyntacticPatDefExtractor {
         def apply(mods: Modifiers, pat: Tree, tpt: Tree, rhs: Tree): List[ValDef] = c.universe.build.SyntacticPatDef.apply(mods.unwrap, pat.unwrap, tpt.unwrap, rhs.unwrap).map(_.wrap)
@@ -322,6 +326,26 @@ trait Internals {
       val SyntacticVarDef: SyntacticValDefExtractor = new SyntacticValDefExtractor {
         def apply(mods: Modifiers, name: TermName, tpt: Tree, rhs: Tree): ValDef = c.universe.build.SyntacticVarDef(mods.unwrap, name.unwrap, tpt.unwrap, rhs.unwrap).wrap
         def unapply(tree: Tree): Option[(Modifiers, TermName, Tree, Tree)] = c.universe.build.SyntacticVarDef.unapply(tree.unwrap).map { case (x1, x2, x3, x4) => (x1.wrap, x2.wrap, x3.wrap, x4.wrap) }
+      }
+      val SyntacticCompoundType: SyntacticCompoundTypeExtractor = new SyntacticCompoundTypeExtractor {
+        def apply(parents: List[Tree], defns: List[Tree]): CompoundTypeTree = c.universe.build.SyntacticCompoundType(parents.map(_.unwrap), defns.map(_.unwrap)).wrap
+        def unapply(tree: Tree): Option[(List[Tree], List[Tree])] = c.universe.build.SyntacticCompoundType.unapply(tree.unwrap).map { case (x1, x2) => (x1.map(_.wrap), x2.map(_.wrap)) }
+      }
+      val SyntacticSingletonType: SyntacitcSingletonTypeExtractor = new SyntacitcSingletonTypeExtractor {
+        def apply(tree: Tree): SingletonTypeTree = c.universe.build.SyntacticSingletonType(tree.unwrap).wrap
+        def unapply(tree: Tree): Option[Tree] = c.universe.build.SyntacticSingletonType.unapply(tree.unwrap).map(_.wrap)
+      }
+      val SyntacticTypeProjection: SyntacticTypeProjectionExtractor = new SyntacticTypeProjectionExtractor {
+        def apply(qual: Tree, name: TypeName): SelectFromTypeTree = c.universe.build.SyntacticTypeProjection(qual.unwrap, name.unwrap).wrap
+        def unapply(tree: Tree): Option[(Tree, TypeName)] = c.universe.build.SyntacticTypeProjection.unapply(tree.unwrap).map{ case(x1, x2) => (x1.wrap, x2.wrap) }
+      }
+      val SyntacticAnnotatedType: SyntacticAnnotatedTypeExtractor = new SyntacticAnnotatedTypeExtractor {
+        def apply(tpt: Tree, annot: Tree): Annotated = c.universe.build.SyntacticAnnotatedType(tpt.unwrap, annot.unwrap).wrap
+        def unapply(tree: Tree): Option[(Tree, Tree)] = c.universe.build.SyntacticAnnotatedType.unapply(tree.unwrap).map { case (x1, x2) => (x1.wrap, x2.wrap) }
+      }
+      val SyntacticExistentialType: SyntacticExistentialTypeExtractor = new SyntacticExistentialTypeExtractor {
+        def apply(tpt: Tree, where: List[Tree]): ExistentialTypeTree = c.universe.build.SyntacticExistentialType(tpt.unwrap, where.map(_.unwrap)).wrap
+        def unapply(tree: Tree): Option[(Tree, List[MemberDef])] = c.universe.build.SyntacticExistentialType.unapply(tree.unwrap).map { case (x1, x2) => (x1.wrap, x2.map(_.wrap)) }
       }
       def ThisType(sym: Symbol): Type = c.universe.build.ThisType(sym.unwrap).wrap
       def TypeBounds(lo: Type,hi: Type): TypeBounds = c.universe.build.TypeBounds(lo.unwrap, hi.unwrap).wrap
