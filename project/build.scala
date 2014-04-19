@@ -1,5 +1,7 @@
 import sbt._
 import Keys._
+import sbtassembly.Plugin._
+import AssemblyKeys._
 
 object build extends Build {
   lazy val sharedSettings = Defaults.defaultSettings ++ Seq(
@@ -140,14 +142,45 @@ object build extends Build {
   ) aggregate (plugin, tests)
 
   lazy val plugin = Project(
-    id   = "scalahost",
+    id   = "scalahost-plugin",
     base = file("plugin")
   ) settings (
     publishableSettings: _*
   ) settings (
+    assemblySettings: _*
+  ) settings (
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
-    scalacOptions ++= Seq()
+    scalacOptions ++= Seq(),
+    test in assembly := {},
+    jarName in assembly := name.value + "_" + scalaVersion.value + "-" + version.value + "-assembly.jar",
+    assemblyOption in assembly ~= { _.copy(includeScala = false) },
+    Keys.`package` in Compile := {
+      val slimJar = (Keys.`package` in Compile).value
+      val fatJar = new File(crossTarget.value + "/" + (jarName in assembly).value)
+      val _ = assembly.value
+      IO.copy(List(fatJar -> slimJar), overwrite = true)
+      println("package: merged scalahost-plugin and scalahost-runtime and produced a fat JAR")
+      slimJar
+    },
+    packagedArtifact in Compile in packageBin := {
+      val temp = (packagedArtifact in Compile in packageBin).value
+      val (art, slimJar) = temp
+      val fatJar = new File(crossTarget.value + "/" + (jarName in assembly).value)
+      val _ = assembly.value
+      IO.copy(List(fatJar -> slimJar), overwrite = true)
+      println("packagedArtifact: merged scalahost-plugin and scalahost-runtime and produced a fat JAR")
+      (art, slimJar)
+    }
+  ) dependsOn (runtime)
+
+  lazy val runtime = Project(
+    id   = "scalahost-runtime",
+    base = file("runtime")
+  ) settings (
+    publishableSettings: _*
+  ) settings (
+    libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _)
   )
 
   lazy val sandbox = Project(
