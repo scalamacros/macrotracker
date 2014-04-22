@@ -180,6 +180,15 @@ object build extends Build {
   ) settings (
     publishableSettings: _*
   ) settings (
+    scalacOptions := {
+      // "-feature" was introduced with 2.10
+      scalaVersion.value match {
+        case v if v.startsWith("2.8") || v.startsWith("2.9") => Seq("-optimise")
+        case _ => Seq("-feature", "-optimise")
+      }
+    },
+    // These are the versions against which SBT is compiled
+    crossScalaVersions := Seq("2.8.2", "2.9.2", "2.9.3", "2.10.4", "2.11.0"),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _)
   )
 

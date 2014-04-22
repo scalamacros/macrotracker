@@ -1,6 +1,6 @@
 language: scala
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean update compile test package publishOnlyWhenOnMaster
+  - sbt ++$TRAVIS_SCALA_VERSION clean update compile test package publishOnlyWhenOnMaster "project scalahost-runtime" "+ publishOnlyWhenOnMaster"
 scala:
   - 2.11.0
 jdk:
