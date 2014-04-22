@@ -187,8 +187,16 @@ object build extends Build {
         case _ => Seq("-feature", "-optimise")
       }
     },
-    // These are the versions against which SBT is compiled
-    crossScalaVersions := Seq("2.8.2", "2.9.2", "2.9.3", "2.10.4", "2.11.0"),
+    crossScalaVersions := {
+      System.getProperty("java.version") match {
+        // On jdk 1.8 build only with 2.10 and 2.11 since 2.8 and 2.9 don't
+        // understand 1.8 bytecode
+        case v if v.startsWith("1.8") => Seq("2.10.4", "2.11.0")
+
+        // These are all the versions against which SBT is compiled
+        case _ => Seq("2.8.2", "2.9.2", "2.9.3", "2.10.4", "2.11.0")
+      }
+    },
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _)
   )
 
