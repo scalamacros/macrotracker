@@ -22,8 +22,8 @@ class TestCompiler {
 
     trees.map { t =>
       t.asInstanceOf[ru1.Tree].attachments.all.collect {
-        case esa: { def touchedSymbols: List[_] } => esa.touchedSymbols
+        case syms: Map[String, Any] => syms.get("touchedSymbols").getOrElse(Nil).asInstanceOf[List[ru.Symbol]]
       }
-    }.flatten.flatten.asInstanceOf[List[ru.Symbol]]
+    }.flatten.flatten
   }
 }
