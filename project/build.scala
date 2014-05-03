@@ -1,7 +1,5 @@
 import sbt._
 import Keys._
-import sbtassembly.Plugin._
-import AssemblyKeys._
 
 object build extends Build {
   lazy val sharedSettings = Defaults.defaultSettings ++ Seq(
@@ -142,62 +140,14 @@ object build extends Build {
   ) aggregate (plugin, tests)
 
   lazy val plugin = Project(
-    id   = "scalahost-plugin",
+    id   = "scalahost",
     base = file("plugin")
   ) settings (
     publishableSettings: _*
   ) settings (
-    assemblySettings: _*
-  ) settings (
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
-    scalacOptions ++= Seq(),
-    test in assembly := {},
-    jarName in assembly := name.value + "_" + scalaVersion.value + "-" + version.value + "-assembly.jar",
-    assemblyOption in assembly ~= { _.copy(includeScala = false) },
-    Keys.`package` in Compile := {
-      val slimJar = (Keys.`package` in Compile).value
-      val fatJar = new File(crossTarget.value + "/" + (jarName in assembly).value)
-      val _ = assembly.value
-      IO.copy(List(fatJar -> slimJar), overwrite = true)
-      println("package: merged scalahost-plugin and scalahost-runtime and produced a fat JAR")
-      slimJar
-    },
-    packagedArtifact in Compile in packageBin := {
-      val temp = (packagedArtifact in Compile in packageBin).value
-      val (art, slimJar) = temp
-      val fatJar = new File(crossTarget.value + "/" + (jarName in assembly).value)
-      val _ = assembly.value
-      IO.copy(List(fatJar -> slimJar), overwrite = true)
-      println("packagedArtifact: merged scalahost-plugin and scalahost-runtime and produced a fat JAR")
-      (art, slimJar)
-    }
-  ) dependsOn (runtime)
-
-  lazy val runtime = Project(
-    id   = "scalahost-runtime",
-    base = file("runtime")
-  ) settings (
-    publishableSettings: _*
-  ) settings (
-    scalacOptions := {
-      // "-feature" was introduced with 2.10
-      scalaVersion.value match {
-        case v if v.startsWith("2.8") || v.startsWith("2.9") => Seq("-optimise")
-        case _ => Seq("-feature", "-optimise")
-      }
-    },
-    crossScalaVersions := {
-      System.getProperty("java.version") match {
-        // On jdk 1.8 build only with 2.10 and 2.11 since 2.8 and 2.9 don't
-        // understand 1.8 bytecode
-        case v if v.startsWith("1.8") => Seq("2.10.4", "2.11.0")
-
-        // These are all the versions against which SBT is compiled
-        case _ => Seq("2.8.2", "2.9.2", "2.9.3", "2.10.4", "2.11.0")
-      }
-    },
-    libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _)
+    scalacOptions ++= Seq()
   )
 
   lazy val sandbox = Project(
