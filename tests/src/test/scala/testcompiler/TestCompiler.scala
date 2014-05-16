@@ -5,7 +5,7 @@ import scala.reflect.runtime.{universe => ru}
 
 class TestCompiler {
 
-	val plugin = "-Xplugin:" + System.getProperty("scalahost.plugin.jar")
+	val plugin = "-Xplugin:" + System.getProperty("macrotracker.plugin.jar")
 	val classpath = "-cp " + sys.props("sbt.class.directory")
 
 	val tb = scala.reflect.runtime.currentMirror.mkToolBox(options = classpath + " " + plugin)

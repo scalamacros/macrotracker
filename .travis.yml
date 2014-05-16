@@ -13,7 +13,7 @@ notifications:
     - denys.shabalin@typesafe.com
 env:
   global:
-   - SCALAREFLECT_MAVEN_REALM="Sonatype Nexus Repository Manager"
-   - SCALAREFLECT_MAVEN_DOMAIN="oss.sonatype.org"
-   - secure: "dk/Yvt4ASpraRMraeTqKAE5bAEBG7ZbmP48xAanptQBLxxlqqt4FxQq505ECjVjm9Mt8lEdknLh8uar8q5iFPX3ATWgbYPbC+lNhh22QxCMucbMKc2/F8mv5wNwZh3JMkjy+l3Nv3AAnCRW3jLxkv7ciY6JEx6Dw8BkXroVQjnE="
-   - secure: "L4H8Ga1q8BCaHGN2AQ1PbAwpdeUjfYaWr35Uho95UuVha08Q6rJak3NJ1JBMh9ZjZ9BX+H6NcfX6yp263mHAf8jv1+KDcD4yDLR8oeB/os1hxN4yhonk6VFwuZKGsEgUcZEPDUwhL7NnckTADaQihBE/NKw1xdFJYaNMwp0N0kg="
+   - SCALAMACROS_MAVEN_REALM="Sonatype Nexus Repository Manager"
+   - SCALAMACROS_MAVEN_DOMAIN="oss.sonatype.org"
+   - secure: "DJyMEptCZezSLUt/xjpaO4g2l/H6ISiAdA5FhbA2x1qYC6uvUdXko0n43GjpA7ONJFx1zrMgcfJF9Y7SCNtdQzgzkQ9hTzr5xIrieUzeJ0dq8yum+gFrgAkTySAfocPO8on8CS/OtTj9m3i/1t1oZouG7I/l9GXyYWfQFPl/UDs="
+   - secure: "cFBNyn2VbVovOn6HhPCGdFSpLJbinGY5jPlIkwailaGjJ53VGwEfFeNuoy9fAt8cLYi2air6kkVQBNnr5E4lTyUtHr4pStpEBiOhq1j1OGQnnxRyQQYRrEwaXFRepYKAk0GMT9lj1/deZcUhOBqwuF96iRJ86OCdyqBsMKRisuk="

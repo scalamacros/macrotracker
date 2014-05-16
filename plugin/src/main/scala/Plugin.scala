@@ -1,8 +1,8 @@
-package scala.tools.nsc.palladium
+package scala.tools.nsc.macrotracker
 
 import scala.tools.nsc.{Global, Phase, SubComponent}
 import scala.tools.nsc.plugins.{Plugin => NscPlugin, PluginComponent => NscPluginComponent}
-import scala.tools.nsc.palladium.{Context => PalladiumContext}
+import scala.tools.nsc.macrotracker.{Context => MacrotrackerContext}
 import scala.reflect.macros.runtime.AbortMacroException
 import scala.reflect.runtime.ReflectionUtils
 import scala.reflect.macros.blackbox.{Context => BlackboxContext}
@@ -16,21 +16,21 @@ class Plugin(val global: Global) extends NscPlugin { self =>
   import scala.reflect.internal.Mode
   import scala.reflect.internal.Flags._
 
-  val name = "scalahost"
-  val description = """Hosts Project Palladium macros in scalac.
-  For more information visit https://github.com/scalareflect/scalahost"""
+  val name = "macrotracker"
+  val description = """Tracks things that are going on during macro expansion.
+  For more information visit https://github.com/scalamacros/macrotracker"""
   val components = List[NscPluginComponent]()
   analyzer.addMacroPlugin(MacroPlugin)
 
   object MacroPlugin extends NscMacroPlugin {
-    case class PalladiumContextAttachment(c1: PalladiumContext)
-    def saveContext(expandee: Tree, c1: PalladiumContext): Unit = expandee.updateAttachment(PalladiumContextAttachment(c1))
-    def loadContext(expandee: Tree): Option[PalladiumContext] = expandee.attachments.get[PalladiumContextAttachment].map(_.c1)
-    def eraseContext(expandee: Tree): Unit = expandee.removeAttachment[PalladiumContextAttachment]
+    case class MacrotrackerContextAttachment(c1: MacrotrackerContext)
+    def saveContext(expandee: Tree, c1: MacrotrackerContext): Unit = expandee.updateAttachment(MacrotrackerContextAttachment(c1))
+    def loadContext(expandee: Tree): Option[MacrotrackerContext] = expandee.attachments.get[MacrotrackerContextAttachment].map(_.c1)
+    def eraseContext(expandee: Tree): Unit = expandee.removeAttachment[MacrotrackerContextAttachment]
 
     override def pluginsMacroRuntime(expandee: Tree): Option[MacroRuntime] = {
       // Some(args => {
-      //   val c1 = new PalladiumContext(args.c)
+      //   val c1 = new MacrotrackerContext(args.c)
       //   saveContext(expandee, c1)
       //   standardMacroRuntime(expandee)(MacroArgs(c1, args.other))
       // })
@@ -59,7 +59,7 @@ class Plugin(val global: Global) extends NscPlugin { self =>
             val implMeth = implMeths getOrElse { throw new NoSuchMethodException(s"$className.$methName") }
             macroLogVerbose(s"successfully loaded macro impl as ($implClass, $implMeth)")
             Some(args => {
-              val c1 = new PalladiumContext(args.c)
+              val c1 = new MacrotrackerContext(args.c)
               saveContext(args.c.expandee, c1)
               val others1 = args.others.map {
                 case arg: Tree => new c1.universe.RichCompilerTree(arg.asInstanceOf[c1.universe.CompilerTree]).wrap
@@ -96,11 +96,15 @@ class Plugin(val global: Global) extends NscPlugin { self =>
         override def onSuccess(expanded: Tree): Tree = {
           val result = super.onSuccess(expanded)
           loadContext(expandee).foreach(c1 => {
-            val attachments = new Attachments[global.type](global)
-            attachments.touchedSymbols = c1.touchedSymbols.toList.asInstanceOf[List[attachments.global.Symbol]]
-            val summary = attachments.attachment
-            expandee.updateAttachment(summary)
-            result.updateAttachment(summary)
+            // NOTE: this needs to be an importable attachment, so we can't use vanilla Map
+            val attachment = new Map.Map1[String, Any]("touchedSymbols", c1.touchedSymbols.toList) with ImportableAttachment {
+              def importAttachment(importer: Importer) = {
+                this mapValues (sym => importer.importSymbol(sym.asInstanceOf[importer.from.Symbol]))
+                this
+              }
+            }
+            expandee.updateAttachment(attachment)
+            result.updateAttachment(attachment)
           })
           result
         }

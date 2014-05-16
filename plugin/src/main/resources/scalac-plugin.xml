@@ -1,4 +1,4 @@
 <plugin>
-  <name>scalahost</name>
-  <classname>scala.tools.nsc.palladium.Plugin</classname>
+  <name>macrotracker</name>
+  <classname>scala.tools.nsc.macrotracker.Plugin</classname>
 </plugin>

@@ -1,8 +1,8 @@
-package scala.tools.nsc.palladium
+package scala.tools.nsc.macrotracker
 package contexts
 
 import scala.reflect.macros.whitebox.{Context => NscContext}
-import scala.tools.nsc.palladium.{Context => PalladiumContext}
+import scala.tools.nsc.macrotracker.{Context => MacrotrackerContext}
 
 trait Root extends NscContext with Universes with Trees with Symbols with Types with Internals {
   self: Context =>
@@ -23,7 +23,7 @@ trait Root extends NscContext with Universes with Trees with Symbols with Types 
   def enclosingImplicits: List[OurImplicitCandidate] = c.enclosingImplicits.map(_.wrap)
   def openImplicits: List[OurImplicitCandidate] = c.openImplicits.map(_.wrap)
   type CompilerContext = scala.reflect.macros.whitebox.Context
-  type OurContext = scala.tools.nsc.palladium.Context
+  type OurContext = scala.tools.nsc.macrotracker.Context
   implicit class RichCompilerContext(m: CompilerContext) { def wrap = new OurContext(c) }
   def enclosingMacros: List[Context] = c.enclosingMacros.map(_.wrap)
   def openMacros: List[Context] = c.openMacros.map(_.wrap)

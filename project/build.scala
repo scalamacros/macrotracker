@@ -6,26 +6,52 @@ object build extends Build {
     scalaVersion := "2.11.0",
     crossVersion := CrossVersion.full,
     version := "0.1.0-SNAPSHOT",
-    organization := "org.scalareflect",
-    description := "Scala host for Project Palladium",
+    organization := "org.scalamacros",
+    description := "Tracks things that are going on during macro expansion",
     resolvers += Resolver.sonatypeRepo("snapshots"),
     resolvers += Resolver.sonatypeRepo("releases"),
-    publishMavenStyle := true,
-    publishArtifact in Compile := false,
-    publishArtifact in Test := false,
     scalacOptions ++= Seq("-feature", "-optimise"),
     parallelExecution in Test := false, // hello, reflection sync!!
     logBuffered := false,
     scalaHome := {
-      val scalaHome = System.getProperty("scalahost.scala.home")
+      val scalaHome = System.getProperty("macrotracker.scala.home")
       if (scalaHome != null) {
         println(s"Going for custom scala home at $scalaHome")
         Some(file(scalaHome))
       } else None
-    }
-    // TODO: how to I make this recursion work?
-    // run <<= run in Compile in sandbox,
-    // test <<= test in Test in tests
+    },
+    publishMavenStyle := true,
+    publishArtifact in Compile := false,
+    publishArtifact in Test := false,
+    publishOnlyWhenOnMaster := publishOnlyWhenOnMasterImpl.value,
+    publishTo <<= version { v: String =>
+      val nexus = "https://oss.sonatype.org/"
+      if (v.trim.endsWith("SNAPSHOT"))
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    },
+    publishMavenStyle := true,
+    pomIncludeRepository := { x => false },
+    pomExtra := (
+      <url>https://github.com/scalamacros/macrotracker</url>
+      <inceptionYear>2014</inceptionYear>
+      <licenses>
+        <license>
+          <name>BSD-like</name>
+          <url>http://www.scala-lang.org/downloads/license.html</url>
+          <distribution>repo</distribution>
+        </license>
+      </licenses>
+      <scm>
+        <url>git://github.com/scalamacros/macrotracker.git</url>
+        <connection>scm:git:git://github.com/scalamacros/macrotracker.git</connection>
+      </scm>
+      <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/scalamacros/macrotracker/issues</url>
+      </issueManagement>
+    )
   )
 
   // http://stackoverflow.com/questions/20665007/how-to-publish-only-when-on-master-branch-under-travis-and-sbt-0-13
@@ -41,75 +67,46 @@ object build extends Build {
       case _                             => Def.task ()
     }
   }
-  lazy val publishableSettings = sharedSettings ++ Seq(
-    publishMavenStyle := true,
-    publishArtifact in Compile := true,
-    publishOnlyWhenOnMaster := publishOnlyWhenOnMasterImpl.value,
-    publishTo <<= version { v: String =>
-      val nexus = "https://oss.sonatype.org/"
-      if (v.trim.endsWith("SNAPSHOT"))
-        Some("snapshots" at nexus + "content/repositories/snapshots")
-      else
-        Some("releases" at nexus + "service/local/staging/deploy/maven2")
-    },
-    pomIncludeRepository := { x => false },
-    pomExtra := (
-      <url>https://github.com/scalareflect/scalahost</url>
-      <inceptionYear>2014</inceptionYear>
-      <licenses>
-        <license>
-          <name>BSD-like</name>
-          <url>http://www.scala-lang.org/downloads/license.html</url>
-          <distribution>repo</distribution>
-        </license>
-      </licenses>
-      <scm>
-        <url>git://github.com/scalareflect/scalahost.git</url>
-        <connection>scm:git:git://github.com/scalareflect/scalahost.git</connection>
-      </scm>
-      <issueManagement>
-        <system>GitHub</system>
-        <url>https://github.com/scalareflect/scalahost/issues</url>
-      </issueManagement>
-    ),
-    credentials ++= loadCredentials().toList
-  )
 
-  def loadCredentials(): Option[Credentials] = {
-    val mavenSettingsFile = System.getProperty("maven.settings.file")
-    if (mavenSettingsFile != null) {
-      println("Loading Sonatype credentials from " + mavenSettingsFile)
-      try {
-        import scala.xml._
-        val settings = XML.loadFile(mavenSettingsFile)
-        def readServerConfig(key: String) = (settings \\ "settings" \\ "servers" \\ "server" \\ key).head.text
-        Some(Credentials(
-          "Sonatype Nexus Repository Manager",
-          "oss.sonatype.org",
-          readServerConfig("username"),
-          readServerConfig("password")
-        ))
-      } catch {
-        case ex: Exception =>
-          println("Failed to load Maven settings from " + mavenSettingsFile + ": " + ex)
-          None
-      }
-    } else {
-      for {
-        realm <- sys.env.get("SCALAREFLECT_MAVEN_REALM")
-        domain <- sys.env.get("SCALAREFLECT_MAVEN_DOMAIN")
-        user <- sys.env.get("SCALAREFLECT_MAVEN_USER")
-        password <- sys.env.get("SCALAREFLECT_MAVEN_PASSWORD")
-      } yield {
-        println("Loading Sonatype credentials from environment variables")
-        Credentials(realm, domain, user, password)
+  lazy val publishableSettings = sharedSettings ++ Seq(
+    publishArtifact in Compile := true,
+    publishArtifact in Test := false,
+    credentials ++= {
+      val mavenSettingsFile = System.getProperty("maven.settings.file")
+      if (mavenSettingsFile != null) {
+        println("Loading Sonatype credentials from " + mavenSettingsFile)
+        try {
+          import scala.xml._
+          val settings = XML.loadFile(mavenSettingsFile)
+          def readServerConfig(key: String) = (settings \\ "settings" \\ "servers" \\ "server" \\ key).head.text
+          List(Credentials(
+            "Sonatype Nexus Repository Manager",
+            "oss.sonatype.org",
+            readServerConfig("username"),
+            readServerConfig("password")
+          ))
+        } catch {
+          case ex: Exception =>
+            println("Failed to load Maven settings from " + mavenSettingsFile + ": " + ex)
+            Nil
+        }
+      } else {
+        (for {
+          realm <- sys.env.get("SCALAMACROS_MAVEN_REALM")
+          domain <- sys.env.get("SCALAMACROS_MAVEN_DOMAIN")
+          user <- sys.env.get("SCALAMACROS_MAVEN_USER")
+          password <- sys.env.get("SCALAMACROS_MAVEN_PASSWORD")
+        } yield {
+          println("Loading Sonatype credentials from environment variables")
+          Credentials(realm, domain, user, password)
+        }).toList
       }
     }
-  }
+  )
 
   lazy val usePluginSettings = Seq(
     scalacOptions in Compile <++= (Keys.`package` in (plugin, Compile)) map { (jar: File) =>
-      System.setProperty("scalahost.plugin.jar", jar.getAbsolutePath)
+      System.setProperty("macrotracker.plugin.jar", jar.getAbsolutePath)
       val addPlugin = "-Xplugin:" + jar.getAbsolutePath
       // Thanks Jason for this cool idea (taken from https://github.com/retronym/boxer)
       // add plugin timestamp to compiler options to trigger recompile of
@@ -123,7 +120,7 @@ object build extends Build {
   // to the compiler.
   lazy val rebuildWhenPluginIsChangedSettings = Seq(
     scalacOptions in Compile <++= (Keys.`package` in (plugin, Compile)) map { (jar: File) =>
-      System.setProperty("scalahost.plugin.jar", jar.getAbsolutePath)
+      System.setProperty("macrotracker.plugin.jar", jar.getAbsolutePath)
       val dummy = "-Jdummy=" + jar.lastModified
       Seq(dummy)
     }
@@ -140,11 +137,12 @@ object build extends Build {
   ) aggregate (plugin, tests)
 
   lazy val plugin = Project(
-    id   = "scalahost",
+    id   = "macrotracker",
     base = file("plugin")
   ) settings (
     publishableSettings: _*
   ) settings (
+    scalaSource in Compile <<= (baseDirectory in Compile)(base => base / "src"),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
     scalacOptions ++= Seq()
@@ -167,6 +165,7 @@ object build extends Build {
     // which is a macro =(
     sharedSettings ++ rebuildWhenPluginIsChangedSettings: _*
   ) settings (
+    packagedArtifacts := Map.empty,
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
     libraryDependencies += "org.scalatest" %% "scalatest" % "2.1.3" % "test",
