@@ -51,6 +51,18 @@ object build extends Build {
         <system>GitHub</system>
         <url>https://github.com/scalamacros/macrotracker/issues</url>
       </issueManagement>
+      <developers>
+        <developer>
+          <id>xeno-by</id>
+          <name>Eugene Burmako</name>
+          <url>http://xeno.by</url>
+        </developer>
+        <developer>
+          <id>Duhemm</id>
+          <name>Martin Duhem</name>
+          <url>https://github.com/duhemm</url>
+        </developer>
+      </developers>
     )
   )
 
