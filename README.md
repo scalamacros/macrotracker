@@ -7,4 +7,4 @@ So far we only remember the symbols that have been touched during expansion, sto
 
 ### How to use
 
-`addCompilerPlugin("org.scalamacros" % "macrotracker" % "0.1.0-SNAPSHOT" cross CrossVersion.full)`.
+`addCompilerPlugin("org.scalamacros" % "macrotracker" % "0.1.0" cross CrossVersion.full)`.

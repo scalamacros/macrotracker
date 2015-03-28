@@ -5,7 +5,7 @@ object build extends Build {
   lazy val sharedSettings = Defaults.defaultSettings ++ Seq(
     scalaVersion := "2.11.6",
     crossVersion := CrossVersion.full,
-    version := "0.1.0-SNAPSHOT",
+    version := "0.2.0-SNAPSHOT",
     organization := "org.scalamacros",
     description := "Tracks things that are going on during macro expansion",
     resolvers += Resolver.sonatypeRepo("snapshots"),
@@ -51,6 +51,18 @@ object build extends Build {
         <system>GitHub</system>
         <url>https://github.com/scalamacros/macrotracker/issues</url>
       </issueManagement>
+      <developers>
+        <developer>
+          <id>xeno-by</id>
+          <name>Eugene Burmako</name>
+          <url>http://xeno.by</url>
+        </developer>
+        <developer>
+          <id>Duhemm</id>
+          <name>Martin Duhem</name>
+          <url>https://github.com/duhemm</url>
+        </developer>
+      </developers>
     )
   )
 
